@@ -18,6 +18,7 @@ def extract_note_sequence(midi_path: Path, add_pauses=True, silence_thresh=0.05)
     midi = pretty_midi.PrettyMIDI(midi_path)
     notes = [(n.start, n.end, n.pitch)
              for inst in midi.instruments for n in inst.notes]
+    logger.debug(f"Notes extracted from {midi_path}: {notes[:10]}...")
     
     if not notes:
         return []
@@ -34,6 +35,8 @@ def extract_note_sequence(midi_path: Path, add_pauses=True, silence_thresh=0.05)
             seq.append(PAUSE_CODE)
         
         seq.append(notes[i][2])
+
+    logger.debug(f"Final note sequence for {midi_path}: {seq}")
     
     return seq
 
@@ -70,11 +73,16 @@ def process_dataset(base_dir="data/midis", metadata="data/metadata/musicnet_meta
         if not seq:
             continue
 
-        M = chord_trajectory_matrix(seq)
+       
 
-        composer_dir = out_dir / composer
+        M = chord_trajectory_matrix(seq)
+        if M.sum() == 0:
+            logger.warning(f"Empty trajectory matrix for {midi_path}, skipping.")
+        import sys; sys.exit()
+
+        composer_dir = out_dir / composer.lower()
         composer_dir.mkdir(exist_ok=True)
-        np.save(composer_dir / f"{midi_path.stem}_traj.npy", M)
+        np.save(composer_dir / f"{composer.lower()}_{midi_path.stem}_traj.npy", M)
 
         records.append({
             "composer": composer,
