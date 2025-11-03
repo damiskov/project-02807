@@ -52,12 +52,11 @@ def chord_trajectory_matrix(sequence):
     
     return M
 
-def process_dataset(base_dir="data/midis", metadata="data/metadata/musicnet_metadata.csv", out_dir="data/features"):
+def process_dataset(base_dir="data/midis", out_dir="data/features"):
     
     base_dir, out_dir = Path(base_dir), Path(out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
 
-    meta = pd.read_csv(metadata)
     records = []
 
     for midi_path in tqdm(base_dir.rglob("*.mid")):
