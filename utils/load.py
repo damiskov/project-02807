@@ -36,7 +36,7 @@ def load_feature_matrices(base_dir: str | Path) -> pd.DataFrame:
     logger.success(f"Loaded {len(df)} matrices from {base_dir}")
     return df
 
-def load_dataset(features_dir="data/features", metadata_csv="data/metadata/musicnet_metadata.csv"):
+def load_dataset(features_dir="data/ctms", metadata_csv="data/metadata/musicnet_metadata.csv"):
     """Convenience wrapper to load both matrices and metadata."""
     matrices_df = load_feature_matrices(features_dir)
     metadata_df = load_metadata(metadata_csv)
