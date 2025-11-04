@@ -1,85 +1,101 @@
-from typing import List, Union, Optional
-import numpy as np
+from dataclasses import dataclass
 from numpy.typing import NDArray
-from utils.frobenius import frobenius_norm
-from utils.load import load_dataset
+from typing import List, Optional
+
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 
+
+# ---- Node -----
+@dataclass 
+class MusicNode:
+    """Class representing a music piece node in the graph."""
+
+    composer: str
+    piece_name: str
+    composition: str
+    ensemble: str
+    id: int
+
+
+
+# ---- Graph -----
+@dataclass
 class MusicGraph:
-    
-    def __init__(self, file_names: Union[List[str], str], adjacency_matrices: NDArray):
-        self.file_names = file_names
-        self.adjacency_matrices = adjacency_matrices
-        
-    def apply_method(self, method_name: str, **kwargs) -> None:
+    """Class representing a music similarity graph."""
 
-        methods = {
-            "clustering": self.cluster_graph
-        }
+    nodes: List[MusicNode]
+    adjacency_matrix: NDArray
+
+    def display(self):
+        """TODO: Implement a pretty way to display the graph."""
+        pass
+
+
+    def plot_graph_networkx(
+        self,
+        adjacency_matrix: np.ndarray,
+        threshold: Optional[float] = None, 
+        node_size: int = 100, figsize: tuple = (12, 8),
+        save_path: Optional[str] = None
+    ) -> None:
         
-        methods[method_name](**kwargs)
-    
-    def create_frobenius_graph(self) -> np.ndarray:
-        n_pieces = len(self.file_names)
-        frobenius_matrix = np.zeros((n_pieces, n_pieces))
+        """
+        Plot the music similarity graph based on the adjacency matrix.
         
-        for i in tqdm(range(n_pieces), desc="Calculating Frobenius graph"):
-            for j in range(n_pieces):
-                if i != j:
-                    diff_matrix = self.adjacency_matrices[i] - self.adjacency_matrices[j]
-                    frobenius_matrix[i, j] = frobenius_norm(diff_matrix)
-                    
-        return frobenius_matrix
-    
-    def plot_graph(self, frobenius_matrix: np.ndarray, threshold: Optional[float] = None, 
-                  node_size: int = 100, figsize: tuple = (12, 8)) -> None:
+        Args:
+            adjacency_matrix (np.ndarray): The adjacency matrix.
+            threshold (Optional[float]): If provided, edges with weights above this threshold will be excluded.
+            node_size (int): Size of the nodes in the graph.
+            figsize (tuple): Size of the figure.
+            save_path (Optional[str]): If provided, the path to save the plotted graph image.
+        """
+        
         G = nx.Graph()
-        for i, name in enumerate(self.file_names):
-            simple_name = name.split('/')[-1].split('.')[0]
-            G.add_node(i, name=simple_name)
         
-        n_pieces = len(self.file_names)
+        for i, node in enumerate(self.nodes):
+            G.add_node(i, name=node.piece_name)
+
+        n_pieces = len(self.nodes)
         for i in range(n_pieces):
             for j in range(i + 1, n_pieces):
-                weight = frobenius_matrix[i, j]
-                if threshold is None or weight < threshold:
+                weight = adjacency_matrix[i, j]
+                if threshold is None or weight <= threshold:
                     G.add_edge(i, j, weight=weight)
         
         plt.figure(figsize=figsize)
+        pos = nx.spring_layout(G)
+        nx.draw(G, pos, with_labels=True, node_size=node_size)
         
-        #pos = nx.spring_layout(G, k=1/np.sqrt(len(G.nodes())), iterations=50)
-        #pos = nx.kamada_kawai_layout(G)
-        pos = nx.forceatlas2_layout(G)
+        if save_path:
+            plt.savefig(save_path)
+        else:   
+            plt.show()
 
-        nx.draw(G, pos, 
-                node_size=node_size,
-                node_color='lightblue',
-                with_labels=True,
-                labels={node: G.nodes[node]['name'] for node in G.nodes()},
-                edge_color='red',
-                width=[80/G[u][v]['weight'] for u, v in G.edges()],
-                font_size=8)
-        
-        plt.title(f"Music Similarity Graph (Edge width indicates similarity), with threshold = {threshold}")
-        plt.savefig("figures/graph/music_similarity_graph_threshold_0_7_times_mean_norm.png")
-        plt.show()
+    
+
+
 
 if __name__ == "__main__":
+
+    from utils.load import load_dataset
+    from utils.frobenius import create_frobenius_adjacency_matrix
+    from utils.frobenius import frobenius_norm
+
     matrices, meta = load_dataset()
 
     number_of_files_to_use = len(matrices) 
     #number_of_files_to_use = 50
-    matrices = matrices.iloc[:number_of_files_to_use]
+    ctms = matrices.iloc[:number_of_files_to_use]
     meta = meta.iloc[:number_of_files_to_use]
 
-    file_names = matrices['piece_name'].tolist()
-    adjacency_matrices = np.array(matrices['matrix'].tolist())
-    
-    graph = MusicGraph(file_names, adjacency_matrices)
-    frobenius_matrix = graph.create_frobenius_graph()
+    file_names = ctms['piece_name'].tolist()
 
-    mean_norm = np.mean(frobenius_matrix[frobenius_matrix > 0])
+    frobenius_adjacency_matrix = create_frobenius_adjacency_matrix(file_names, ctms['matrix'].tolist())
+
+    graph = MusicGraph(file_names, frobenius_adjacency_matrix
+                       )
+    mean_norm = np.mean(frobenius_adjacency_matrix[frobenius_adjacency_matrix > 0])
     threshold = mean_norm * 0.7
-    graph.plot_graph(frobenius_matrix, threshold=threshold, node_size=300, figsize=(15, 10))
+    graph.plot_graph_networkx(frobenius_adjacency_matrix, threshold=threshold, node_size=300, figsize=(15, 10))
