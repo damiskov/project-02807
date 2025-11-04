@@ -18,7 +18,7 @@ def extract_note_sequence(midi_path: Path, add_pauses=True, silence_thresh=0.05)
     midi = pretty_midi.PrettyMIDI(midi_path)
     notes = [(n.start, n.end, n.pitch)
              for inst in midi.instruments for n in inst.notes]
-    logger.debug(f"Notes extracted from {midi_path}: {notes[:10]}...")
+    # logger.debug(f"Notes extracted from {midi_path}: {notes[:10]}...")
     
     if not notes:
         return []
@@ -35,9 +35,7 @@ def extract_note_sequence(midi_path: Path, add_pauses=True, silence_thresh=0.05)
             seq.append(PAUSE_CODE)
         
         seq.append(notes[i][2])
-
-    logger.debug(f"Final note sequence for {midi_path}: {seq}")
-    
+    # logger.debug(f"Final note sequence for {midi_path}: {seq}")   
     return seq
 
 def chord_trajectory_matrix(sequence):
@@ -52,7 +50,7 @@ def chord_trajectory_matrix(sequence):
     
     return M
 
-def process_dataset(base_dir="data/midis", out_dir="data/features"):
+def save_ctms(base_dir="data/midis", out_dir="data/features"):
     
     base_dir, out_dir = Path(base_dir), Path(out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
@@ -66,7 +64,7 @@ def process_dataset(base_dir="data/midis", out_dir="data/features"):
             seq = extract_note_sequence(midi_path)
 
         except Exception as e:
-            print(f"Error processing {midi_path}: {e}")
+            logger.error(f"Error processing {midi_path}: {e}")
             continue
 
         if not seq:
@@ -93,5 +91,44 @@ def process_dataset(base_dir="data/midis", out_dir="data/features"):
     df.to_csv(out_dir / "summary.csv", index=False)
     logger.success(f"Processed {len(df)} MIDI files -> saved to {out_dir}/summary.csv")
 
+
+def save_sequences(base_dir="data/midis", out_dir="data/sequences"):
+    
+    base_dir, out_dir = Path(base_dir), Path(out_dir)
+    out_dir.mkdir(exist_ok=True, parents=True)
+
+    records = []
+
+    for midi_path in tqdm(base_dir.rglob("*.mid")):
+    
+        composer = midi_path.parent.name
+        try:
+            seq = extract_note_sequence(midi_path)
+
+        except Exception as e:
+            logger.error(f"Error processing {midi_path}: {e}")
+            continue
+
+        if not seq:
+            logger.warning(f"Empty sequence for {midi_path}, skipping.")
+            continue
+
+        composer_dir = out_dir / composer.lower()
+        composer_dir.mkdir(exist_ok=True)
+        np.save(composer_dir / f"{composer.lower()}_{midi_path.stem}_seq.npy", np.array(seq))
+
+        records.append({
+            "composer": composer,
+            "file": str(midi_path),
+            "length": len(seq),
+        })
+
+    df = pd.DataFrame(records)
+    df.to_csv(out_dir / "sequences_summary.csv", index=False)
+    logger.success(f"Processed {len(df)} MIDI files -> saved to {out_dir}/sequences_summary.csv")
+
+
+
+
 if __name__ == "__main__":
-    process_dataset()
+    save_sequences()
