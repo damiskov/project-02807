@@ -5,24 +5,22 @@ from typing import List
 
 
 def create_frobenius_adjacency_matrix(
-    file_names: List[str],
     ctms: List[NDArray]
 ) -> np.ndarray:
     """
-    Given a list of file names and their corresponding CTMs (Chord trajectory matrices),
+    Given a list of CTMs (Chord trajectory matrices),
 
     this function creates a Frobenius adjacency matrix.
     
     Args:
-        file_names (List[str]): List of music piece file names.
-        ctms (NDArray): Array of chord trajectory matrices corresponding to the music pieces.
+        ctms (List[NDArray]): List of chord trajectory matrices.
     
     Returns:
         np.ndarray: Frobenius adjacency matrix where each entry (i, j) represents the
                     Frobenius norm of the difference between the CTMs of pieces i and j.
     """
 
-    n_pieces = len(file_names)
+    n_pieces = len(ctms)
     frobenius_matrix = np.zeros((n_pieces, n_pieces))
     
     for i in tqdm(range(n_pieces), desc="Calculating Frobenius graph"):

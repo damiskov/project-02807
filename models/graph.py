@@ -3,7 +3,9 @@ from numpy.typing import NDArray
 from typing import List, Optional
 
 import numpy as np
+import pandas as pd
 import networkx as nx
+from loguru import logger
 import matplotlib.pyplot as plt
 
 
@@ -13,7 +15,6 @@ class MusicNode:
     """Class representing a music piece node in the graph."""
 
     composer: str
-    piece_name: str
     composition: str
     ensemble: str
     id: int
@@ -55,7 +56,7 @@ class MusicGraph:
         G = nx.Graph()
         
         for i, node in enumerate(self.nodes):
-            G.add_node(i, name=node.piece_name)
+            G.add_node(i, name=f"{node.composer}_{node.composition}")
 
         n_pieces = len(self.nodes)
         for i in range(n_pieces):
@@ -74,28 +75,39 @@ class MusicGraph:
             plt.show()
 
     
+# helper: create list of nodes from metadata
+def create_music_nodes(
+    metadata: pd.DataFrame
+) -> List[MusicNode]:
+    nodes = []
 
+    for idx, row in metadata.iterrows():
 
+        node = MusicNode(
+            composer=row['composer'],
+            composition=row['composition'],
+            ensemble=row['ensemble'],
+            id=idx
+        )
+        nodes.append(node)
+    return nodes
 
 if __name__ == "__main__":
 
     from utils.load import load_dataset
     from utils.frobenius import create_frobenius_adjacency_matrix
-    from utils.frobenius import frobenius_norm
 
     matrices, meta = load_dataset()
 
-    number_of_files_to_use = len(matrices) 
-    #number_of_files_to_use = 50
-    ctms = matrices.iloc[:number_of_files_to_use]
-    meta = meta.iloc[:number_of_files_to_use]
+    # number_of_files_to_use = len(matrices) 
+    n = 50
+    ctms = matrices["matrix"].iloc[:n]
+    meta = meta.iloc[:n]
+    
+    nodes = create_music_nodes(meta)
+    frobenius_adjacency_matrix = create_frobenius_adjacency_matrix(ctms.tolist())
 
-    file_names = ctms['piece_name'].tolist()
-
-    frobenius_adjacency_matrix = create_frobenius_adjacency_matrix(file_names, ctms['matrix'].tolist())
-
-    graph = MusicGraph(file_names, frobenius_adjacency_matrix
-                       )
+    graph = MusicGraph(nodes, frobenius_adjacency_matrix)
     mean_norm = np.mean(frobenius_adjacency_matrix[frobenius_adjacency_matrix > 0])
     threshold = mean_norm * 0.7
     graph.plot_graph_networkx(frobenius_adjacency_matrix, threshold=threshold, node_size=300, figsize=(15, 10))
