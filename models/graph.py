@@ -7,7 +7,7 @@ import pandas as pd
 import networkx as nx
 from loguru import logger
 import matplotlib.pyplot as plt
-
+import plotly.graph_objects as go
 
 # ---- Node -----
 @dataclass 
@@ -34,45 +34,58 @@ class MusicGraph:
         pass
 
 
-    def plot_graph_networkx(
-        self,
-        adjacency_matrix: np.ndarray,
-        threshold: Optional[float] = None, 
-        node_size: int = 100, figsize: tuple = (12, 8),
-        save_path: Optional[str] = None
-    ) -> None:
-        
-        """
-        Plot the music similarity graph based on the adjacency matrix.
-        
-        Args:
-            adjacency_matrix (np.ndarray): The adjacency matrix.
-            threshold (Optional[float]): If provided, edges with weights above this threshold will be excluded.
-            node_size (int): Size of the nodes in the graph.
-            figsize (tuple): Size of the figure.
-            save_path (Optional[str]): If provided, the path to save the plotted graph image.
-        """
-        
+    def plot_graph_by_composer(self, adjacency_matrix, percentile=20, 
+                          figsize=(20, 20), node_size=300):
         G = nx.Graph()
         
+        composers = list(set([node.composer for node in self.nodes]))
+        composer_to_color = {composer: plt.cm.tab20(i / len(composers)) 
+                            for i, composer in enumerate(composers)}
+        
         for i, node in enumerate(self.nodes):
-            G.add_node(i, name=f"{node.composer}_{node.composition}")
-
+            G.add_node(i, name=f"{node.composer}_{node.composition}", composer=node.composer)
+        
+        threshold = np.percentile(adjacency_matrix[np.triu_indices_from(adjacency_matrix, k=1)], percentile)
         n_pieces = len(self.nodes)
+        
         for i in range(n_pieces):
             for j in range(i + 1, n_pieces):
                 weight = adjacency_matrix[i, j]
                 if threshold is None or weight <= threshold:
                     G.add_edge(i, j, weight=weight)
         
-        plt.figure(figsize=figsize)
-        pos = nx.spring_layout(G)
-        nx.draw(G, pos, with_labels=True, node_size=node_size)
+        _, ax = plt.subplots(figsize=figsize)
         
-        if save_path:
-            plt.savefig(save_path)
-        else:   
-            plt.show()
+        pos = nx.spring_layout(G, k=15, iterations=100, seed=42)
+    
+        nx.draw_networkx_edges(G, pos, alpha=0.7, width=0.9, edge_color='gray', ax=ax)
+        
+        for composer in composers:
+            nodelist = [i for i, node in enumerate(self.nodes) if node.composer == composer]
+            nx.draw_networkx_nodes(G, pos, 
+                                nodelist=nodelist,
+                                node_size=node_size, 
+                                node_color=[composer_to_color[composer]],
+                                alpha=0.8,
+                                edgecolors='white',
+                                linewidths=2,
+                                label=composer,
+                                ax=ax)
+        
+        nx.draw_networkx_labels(G, pos, 
+                            labels={i: str(i) for i in G.nodes()},
+                            font_size=8,
+                            font_weight='bold',
+                            ax=ax)
+        
+        ax.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize=10, 
+                title='Composers', frameon=True, fancybox=True, shadow=True)
+        
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
+
+        plt.savefig('figures/graph/music_graph.png')
 
     
 # helper: create list of nodes from metadata
@@ -99,15 +112,12 @@ if __name__ == "__main__":
 
     matrices, meta = load_dataset()
 
-    # number_of_files_to_use = len(matrices) 
-    n = 50
-    ctms = matrices["matrix"].iloc[:n]
+    n = 125 # Sample n random pieces
+    ctms = matrices["matrix"].sample(frac=1, random_state=42).head(n) # shuffle to get random samples
     meta = meta.iloc[:n]
     
     nodes = create_music_nodes(meta)
     frobenius_adjacency_matrix = create_frobenius_adjacency_matrix(ctms.tolist())
 
     graph = MusicGraph(nodes, frobenius_adjacency_matrix)
-    mean_norm = np.mean(frobenius_adjacency_matrix[frobenius_adjacency_matrix > 0])
-    threshold = mean_norm * 0.7
-    graph.plot_graph_networkx(frobenius_adjacency_matrix, threshold=threshold, node_size=300, figsize=(15, 10))
+    graph.plot_graph_by_composer(frobenius_adjacency_matrix, percentile=20, node_size=300, figsize=(15, 10))
