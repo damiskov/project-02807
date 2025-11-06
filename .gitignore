@@ -10,7 +10,6 @@ __pycache__/
 *.so
 
 *.png
-
 # MacOS folders
 .DS_Store
 
