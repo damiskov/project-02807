@@ -4,27 +4,30 @@ Internal utilities for generating MinHash signatures from shingles.
 import numpy as np
 
 
-def make_hash_functions(k: int, max_val: int = 2**32 - 1, seed: int = 42):
+def make_hash_functions(
+    k: int,
+    max_val: int = 2**32 - 1,
+    seed: int = 42
+) -> callable:
     """Generate k different hash functions of the form h(x) = (a*x + b) % p."""
     rng = np.random.default_rng(seed)
-    prime_large = int(2**32)
-    a = rng.integers(1, prime_large, size=k, dtype=np.uint64)
-    b = rng.integers(0, prime_large, size=k, dtype=np.uint64)
+    a = rng.integers(1, max_val, size=k, dtype=np.uint64)
+    b = rng.integers(0, max_val, size=k, dtype=np.uint64)
 
     def hash_family(x):
         x = np.uint64(x)
-        return (a * x + b) % prime_large    
+        return (a * x + b) % max_val
 
     return hash_family
 
-def shingle_to_int(shingle, base=131):
+def shingle_to_int(shingle, base=131) -> int:
     """Encode a shingle (list of ints) into a single integer."""
     h = 0
     for val in shingle:
         h = h * base + val
     return h
 
-def compute_minhash(shingles, k=100, seed=42):
+def compute_minhash(shingles, k=100, seed=42) -> np.ndarray:
     """Compute k MinHash values from a set of shingles."""
 
     # convert shingles to integer IDs    
