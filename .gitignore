@@ -1,4 +1,5 @@
 data/midis/*
+*.midi
 tests/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -9,7 +10,6 @@ __pycache__/
 *.so
 
 *.png
-
 # MacOS folders
 .DS_Store
 
