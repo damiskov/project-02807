@@ -2,10 +2,7 @@
 Functions for generating shingles from the musical sequences.
 """
 import numpy as np
-
 from utils.load import load_sequences
-
-from typing import Optional
 
 
 def generate_shingles(sequence: np.ndarray, shingle_size: int = 5) -> list[np.ndarray]:

@@ -1,5 +1,5 @@
 """
-Internal utilities for generating MinHash signatures from shingles.
+Internal utilities for generating MinHash signatures and computing similarities.
 """
 import numpy as np
 
@@ -28,7 +28,16 @@ def shingle_to_int(shingle, base=131) -> int:
     return h
 
 def compute_minhash(shingles, k=100, seed=42) -> np.ndarray:
-    """Compute k MinHash values from a set of shingles."""
+    """
+    Compute k MinHash values from a set of shingles.
+    
+    Args:
+        shingles (list[np.ndarray]): List of shingles (subsequences).
+        k (int): Number of hash functions / MinHash values to compute.
+        seed (int): Random seed for hash function generation.
+    Returns:
+        np.ndarray: Array of k MinHash values. (MinHash signature)
+    """
 
     # convert shingles to integer IDs    
     shingle_ids = [shingle_to_int(s) for s in shingles]
@@ -36,12 +45,35 @@ def compute_minhash(shingles, k=100, seed=42) -> np.ndarray:
         return np.zeros(k, dtype=np.uint64)
     
     # create k hash functions
-    hash_f = make_hash_functions(k, seed=seed)
+    hash_functions = make_hash_functions(k, seed=seed)
 
     # compute min hash per function
     minhashes = np.full(k, np.inf)
     for x in shingle_ids:
-        hashes = hash_f(x)
+        hashes = hash_functions(x)
         minhashes = np.minimum(minhashes, hashes)
 
     return minhashes.astype(np.uint64)
+
+
+def pairwise_minhash_similarity(signatures: np.ndarray) -> np.ndarray:
+    """
+    Vectorized computation of pairwise Jaccard similarity estimates from MinHash signatures.
+    Args:
+        signatures (np.ndarray): Array of shape (N, k), where
+                                 N = number of sequences,
+                                 k = number of minhash values per sequence.
+
+    Returns:
+        np.ndarray: (N, N) similarity matrix with values in [0, 1].
+    """
+    N, k = signatures.shape
+
+    # expand dimensions for broadcasting
+    A = signatures[:, np.newaxis, :]  #  (N, 1, k)
+    B = signatures[np.newaxis, :, :]  #  (1, N, k)
+
+    # elementwise comparison across k and count matches
+    matches = (A == B).sum(axis=2)    # shape (N, N)
+    similarity = matches / k          # normalize to [0,1]
+    return similarity
