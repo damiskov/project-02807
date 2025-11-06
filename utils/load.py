@@ -55,6 +55,47 @@ def load_dataset(features_dir="data/ctms", metadata_csv="data/metadata/musicnet_
     # align based on 'id' if presen
     return matrices_df, metadata_df
 
+
+def load_sequences(
+    base_dir: str | Path = "data/sequences",
+    file_extension: str = ".npy"
+) -> pd.DataFrame:
+    """
+    Recursively load all musical sequences from .npy files into a DataFrame.
+    Each row: composer, piece_name, sequence (np.ndarray), path.
+    """
+    base_dir = Path(base_dir)
+    records = []
+    for npy_path in tqdm(base_dir.rglob(f"*{file_extension}"), desc="Loading sequences"):
+        composer = npy_path.parent.name.lower()
+        piece_name = npy_path.stem
+        
+        # Extract ID from filename (e.g., schubert_1752_sy_sps14 -> 1752)
+        match = re.search(r'_(\d+)_', piece_name)
+        id = int(match.group(1)) if match else None
+        
+        try:
+            sequence = np.load(npy_path)
+            records.append({
+                "composer": composer,
+                "piece_name": piece_name,
+                "id": id,
+                "sequence": sequence,
+                "path": str(npy_path)
+            })
+        except Exception as e:
+            logger.warning(f"Error loading {npy_path}: {e}")
+            continue
+
+    df = pd.DataFrame(records, index=[r['id'] for r in records])
+    df.sort_index(inplace=True)
+    df.index.name = 'id'
+    logger.success(f"Loaded {len(df)} sequences from {base_dir}")
+    return df
+
+
+
+
 if __name__ == "__main__":
     matrices, meta = load_dataset()
     logger.info(f"Matrix sample:\n{matrices.head()}")
