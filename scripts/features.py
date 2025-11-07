@@ -51,38 +51,37 @@ def chord_trajectory_matrix(sequence):
     return M
 
 def save_ctms(base_dir="data/midis", out_dir="data/features"):
-    
+    """
+    Process movie theme MIDIs to extract chord trajectory matrices and save them as .npy.
+    Filenames are based on IMDb ID (from MIDI filename stem).
+    """
     base_dir, out_dir = Path(base_dir), Path(out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
 
     records = []
 
-    for midi_path in tqdm(base_dir.rglob("*.mid")):
-    
-        composer = midi_path.parent.name
+    for midi_path in tqdm(base_dir.rglob("*.mid"), desc="Processing MIDIs"):
         try:
             seq = extract_note_sequence(midi_path)
-
         except Exception as e:
             logger.error(f"Error processing {midi_path}: {e}")
             continue
 
         if not seq:
+            logger.warning(f"Empty sequence for {midi_path}, skipping.")
             continue
-
-       
 
         M = chord_trajectory_matrix(seq)
         if M.sum() == 0:
             logger.warning(f"Empty trajectory matrix for {midi_path}, skipping.")
-        import sys; sys.exit()
+            continue
 
-        composer_dir = out_dir / composer.lower()
-        composer_dir.mkdir(exist_ok=True)
-        np.save(composer_dir / f"{composer.lower()}_{midi_path.stem}_traj.npy", M)
+        # Use IMDb ID from filename as output filename
+        imdb_id = midi_path.stem
+        np.save(out_dir / f"{imdb_id}_traj.npy", M)
 
         records.append({
-            "composer": composer,
+            "id": imdb_id,
             "file": str(midi_path),
             "length": len(seq),
         })
@@ -93,18 +92,18 @@ def save_ctms(base_dir="data/midis", out_dir="data/features"):
 
 
 def save_sequences(base_dir="data/midis", out_dir="data/sequences"):
-    
+    """
+    Process movie theme MIDIs to extract note sequences and save them as .npy.
+    Filenames are based on IMDb ID (from MIDI filename stem).
+    """
     base_dir, out_dir = Path(base_dir), Path(out_dir)
     out_dir.mkdir(exist_ok=True, parents=True)
 
     records = []
 
-    for midi_path in tqdm(base_dir.rglob("*.mid")):
-    
-        composer = midi_path.parent.name
+    for midi_path in tqdm(base_dir.rglob("*.mid"), desc="Processing MIDIs"):
         try:
             seq = extract_note_sequence(midi_path)
-
         except Exception as e:
             logger.error(f"Error processing {midi_path}: {e}")
             continue
@@ -113,12 +112,12 @@ def save_sequences(base_dir="data/midis", out_dir="data/sequences"):
             logger.warning(f"Empty sequence for {midi_path}, skipping.")
             continue
 
-        composer_dir = out_dir / composer.lower()
-        composer_dir.mkdir(exist_ok=True)
-        np.save(composer_dir / f"{composer.lower()}_{midi_path.stem}_seq.npy", np.array(seq))
+        # Use IMDb ID from filename as output filename
+        imdb_id = midi_path.stem
+        np.save(out_dir / f"{imdb_id}_seq.npy", np.array(seq))
 
         records.append({
-            "composer": composer,
+            "id": imdb_id,
             "file": str(midi_path),
             "length": len(seq),
         })
@@ -126,7 +125,6 @@ def save_sequences(base_dir="data/midis", out_dir="data/sequences"):
     df = pd.DataFrame(records)
     df.to_csv(out_dir / "sequences_summary.csv", index=False)
     logger.success(f"Processed {len(df)} MIDI files -> saved to {out_dir}/sequences_summary.csv")
-
 
 
 

@@ -6,35 +6,47 @@ from loguru import logger
 import re
 
 def load_metadata(csv_path: str | Path) -> pd.DataFrame:
-    """Load the MusicNet metadata CSV."""
+    """Load movie metadata CSV and keep IMDb rating only."""
+    import ast
+
     df = pd.read_csv(csv_path)
     df.columns = [c.strip().lower() for c in df.columns]
     df.index = df['id']
     df.sort_index(inplace=True)
     df.drop('id', axis=1, inplace=True)
+
+    if 'ratings' in df.columns:
+        def extract_imdb(ratings_str):
+            try:
+                ratings_list = ast.literal_eval(ratings_str)
+                for r in ratings_list:
+                    if r['Source'] == 'Internet Movie Database':
+                        # convert "8.6/10" → float 8.6
+                        return float(r['Value'].split('/')[0])
+            except Exception:
+                return np.nan
+            return np.nan
+
+        df['imdbrating'] = df['ratings'].apply(extract_imdb)
+        df.drop('ratings', axis=1, inplace=True)
+
     return df
 
 def load_feature_matrices(base_dir: str | Path) -> pd.DataFrame:
     """
-    Recursively load all .npy chord trajectory matrices into a DataFrame.
-    Each row: composer, piece_name, matrix (np.ndarray), path.
+    Recursively load all .npy chord trajectory matrices for movie themes into a DataFrame.
+    Each row: piece_id (IMDb), matrix (np.ndarray), path.
     """
     base_dir = Path(base_dir)
     records = []
     for npy_path in tqdm(base_dir.rglob("*.npy"), desc="Loading matrices"):
-        composer = npy_path.parent.name.lower()
-        piece_name = npy_path.stem.replace("_traj", "")
-        
-        # Extract ID from filename (e.g., schubert_1752_sy_sps14 -> 1752)
-        match = re.search(r'_(\d+)_', piece_name)
-        id = int(match.group(1)) if match else None
+        # Use filename stem as IMDb ID
+        piece_id = npy_path.stem.replace("_traj", "")
         
         try:
             matrix = np.load(npy_path)
             records.append({
-                "composer": composer,
-                "piece_name": piece_name,
-                "id": id,
+                "id": piece_id,
                 "matrix": matrix,
                 "path": str(npy_path)
             })
@@ -48,7 +60,7 @@ def load_feature_matrices(base_dir: str | Path) -> pd.DataFrame:
     logger.success(f"Loaded {len(df)} matrices from {base_dir}")
     return df
 
-def load_dataset(features_dir="data/ctms", metadata_csv="data/metadata/musicnet_metadata.csv"):
+def load_dataset(features_dir="data/ctms", metadata_csv="data/metadata/movies_metadata.csv"):
     """Convenience wrapper to load both matrices and metadata."""
     matrices_df = load_feature_matrices(features_dir)
     metadata_df = load_metadata(metadata_csv)
@@ -56,30 +68,22 @@ def load_dataset(features_dir="data/ctms", metadata_csv="data/metadata/musicnet_
     return matrices_df, metadata_df
 
 
-def load_sequences(
-    base_dir: str | Path = "data/sequences",
-    file_extension: str = ".npy"
-) -> pd.DataFrame:
+def load_sequences(base_dir: str | Path = "data/sequences", file_extension: str = ".npy") -> pd.DataFrame:
     """
-    Recursively load all musical sequences from .npy files into a DataFrame.
-    Each row: composer, piece_name, sequence (np.ndarray), path.
+    Recursively load all musical sequences for movie themes from .npy files into a DataFrame.
+    Each row: piece_id (IMDb), sequence (np.ndarray), path.
     """
     base_dir = Path(base_dir)
     records = []
+
     for npy_path in tqdm(base_dir.rglob(f"*{file_extension}"), desc="Loading sequences"):
-        composer = npy_path.parent.name.lower()
-        piece_name = npy_path.stem
-        
-        # Extract ID from filename (e.g., schubert_1752_sy_sps14 -> 1752)
-        match = re.search(r'_(\d+)_', piece_name)
-        id = int(match.group(1)) if match else None
+        # Use filename stem as IMDb ID
+        piece_id = npy_path.stem.replace("_seq", "")
         
         try:
             sequence = np.load(npy_path)
             records.append({
-                "composer": composer,
-                "piece_name": piece_name,
-                "id": id,
+                "id": piece_id,
                 "sequence": sequence,
                 "path": str(npy_path)
             })
@@ -92,7 +96,6 @@ def load_sequences(
     df.index.name = 'id'
     logger.success(f"Loaded {len(df)} sequences from {base_dir}")
     return df
-
 
 
 
