@@ -39,10 +39,9 @@ def frobenius_norm(matrix):
 
 # for testing
 if __name__ == "__main__":
-    
-    from utils.load import load_dataset
+    from load import load_dataset
 
-    matrices, meta = load_dataset()
+    matrices, meta = load_dataset("../data/ctms", "../data/metadata/movies_metadata.csv")
     # apply the frobenius norm to each matrix and add as a new column
     meta['frobenius_norm'] = matrices['matrix'].apply(frobenius_norm)
-    print(meta[['composer', 'frobenius_norm']].head())
+    print(meta[['title', 'frobenius_norm']].head())
