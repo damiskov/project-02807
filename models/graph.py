@@ -119,13 +119,12 @@ def create_movie_nodes(metadata: pd.DataFrame) -> List[MovieNode]:
 
 if __name__ == "__main__":
 
-    from utils.load import load_feature_matrices, load_metadata
+    from utils.load import load_dataset
     from utils.frobenius import create_frobenius_adjacency_matrix
 
     # Load your movie data
-    ctms_df = load_feature_matrices("../data/ctms")   # each row: matrix for a movie
-    meta_df = load_metadata("../data/metadata/movies_metadata.csv")        # metadata keyed by IMDb ID
-
+    ctms_df, meta_df = load_dataset("../data/ctms", "../data/metadata/movies_metadata.csv")
+    
     # Use first n movies
     n = 50
     ctms = ctms_df['matrix'].iloc[:n].tolist()

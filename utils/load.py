@@ -15,21 +15,6 @@ def load_metadata(csv_path: str | Path) -> pd.DataFrame:
     df.sort_index(inplace=True)
     df.drop('id', axis=1, inplace=True)
 
-    if 'ratings' in df.columns:
-        def extract_imdb(ratings_str):
-            try:
-                ratings_list = ast.literal_eval(ratings_str)
-                for r in ratings_list:
-                    if r['Source'] == 'Internet Movie Database':
-                        # convert "8.6/10" → float 8.6
-                        return float(r['Value'].split('/')[0])
-            except Exception:
-                return np.nan
-            return np.nan
-
-        df['imdbrating'] = df['ratings'].apply(extract_imdb)
-        df.drop('ratings', axis=1, inplace=True)
-
     return df
 
 def load_feature_matrices(base_dir: str | Path) -> pd.DataFrame:
@@ -64,9 +49,7 @@ def load_dataset(features_dir="data/ctms", metadata_csv="data/metadata/movies_me
     """Convenience wrapper to load both matrices and metadata."""
     matrices_df = load_feature_matrices(features_dir)
     metadata_df = load_metadata(metadata_csv)
-    # align based on 'id' if presen
     return matrices_df, metadata_df
-
 
 def load_sequences(base_dir: str | Path = "data/sequences", file_extension: str = ".npy") -> pd.DataFrame:
     """
