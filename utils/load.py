@@ -56,6 +56,7 @@ def load_sequences(base_dir: str | Path = "data/sequences", file_extension: str 
     Recursively load all musical sequences for movie themes from .npy files into a DataFrame.
     Each row: piece_id (IMDb), sequence (np.ndarray), path.
     """
+    logger.info(f"Loading sequences from {base_dir} with extension {file_extension}")
     base_dir = Path(base_dir)
     records = []
 
