@@ -107,16 +107,31 @@ def plot_pca_variance(pca: PCA):
 def plot_clusters(
     data: np.ndarray,
     labels: np.ndarray,
+    dim: int,
     title: str = "Clusters Visualization"
 ):
-    """Scatter plot of clustered data."""
-    plt.figure(figsize=(10, 8))
+    """
+    Scatter plot of clustered data.
+    
+    Handles both 2D and 3D data based on the 'dim' parameter.
+    """
+    fig = plt.figure(figsize=(10, 8))
     
     # Create scatter plot with colors based on cluster labels
-    scatter = plt.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', alpha=0.7)
+    if dim == 2:
+        ax = fig.add_subplot(111)
+        scatter = ax.scatter(data[:, 0], data[:, 1], c=labels, cmap='viridis', alpha=0.7)
+        ax.set_xlabel("Principal Component 1")
+        ax.set_ylabel("Principal Component 2")
+    elif dim == 3:
+        ax = fig.add_subplot(111, projection='3d')
+        scatter = ax.scatter(data[:, 0], data[:, 1], data[:, 2], c=labels, cmap='viridis', alpha=0.7)
+        ax.set_xlabel("Principal Component 1")
+        ax.set_ylabel("Principal Component 2")
+        ax.set_zlabel("Principal Component 3")
+    else:
+        raise ValueError(f"Unsupported dimension: {dim}. Only 2D and 3D plots are supported.")
     
-    plt.title(title)
-    plt.xlabel("Principal Component 1")
-    plt.ylabel("Principal Component 2")
+    ax.set_title(title)
     plt.colorbar(scatter, label="Cluster")
     plt.show()

@@ -69,3 +69,9 @@ class KMeansClusterModel(ClusterModel):
             raise RuntimeError("Model is not fitted yet.")
         distances = np.linalg.norm(X[:, np.newaxis] - self.centroids, axis=2)
         return np.argmin(distances, axis=1)
+    
+# TODO: Irene - DBSCAN implementation
+
+@dataclass
+class DBSCANClusterModel(ClusterModel):
+    ... # Implementation goes here
