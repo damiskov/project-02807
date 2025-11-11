@@ -64,7 +64,7 @@ def masked_cosine_distance(A: np.ndarray, B: np.ndarray) -> float:
     sim = np.dot(a_flat, b_flat) / (norm_a * norm_b)
     
     # Convert to distance
-    dist = np.sqrt(1 - sim)  # smaller = more similar
+    dist = 1 - sim  # smaller = more similar
 
     return dist
 
