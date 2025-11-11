@@ -1,10 +1,7 @@
 from typing import List
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-
-from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 def pitch_class_normalization(sequence: List[int]) -> List[int]:
@@ -108,6 +105,7 @@ def plot_clusters(
     data: np.ndarray,
     labels: np.ndarray,
     dim: int,
+    save_mode: bool = False,
     title: str = "Clusters Visualization"
 ):
     """
@@ -134,4 +132,8 @@ def plot_clusters(
     
     ax.set_title(title)
     plt.colorbar(scatter, label="Cluster")
-    plt.show()
+
+    if save_mode:
+        plt.savefig(f"figs/{title.replace(' ', '_').lower()}.png")
+    else:
+        plt.show()
