@@ -4,8 +4,7 @@
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
-from typing import List, Optional
-from loguru import logger
+from typing import List, Optional, Literal
 from abc import ABC, abstractmethod
 
 
@@ -75,3 +74,69 @@ class KMeansClusterModel(ClusterModel):
 @dataclass
 class DBSCANClusterModel(ClusterModel):
     ... # Implementation goes here
+
+
+@dataclass
+class HierarchicalCluster(ClusterModel):
+
+    n_clusters: int
+    linkage: Literal["centroid"] = "centroid"
+    labels_: Optional[np.ndarray] = None
+    fitted: bool = False
+
+    def _compute_centroid(self, X: np.ndarray) -> np.ndarray:
+        return np.mean(X, axis=0)
+    
+    def _cluster_distance(self, X: np.ndarray, c1_idx: List[int], c2_idx: List[int]) -> float:
+        """
+        Distance between two clusters: d(centroid(C1), centroid(C2)).
+        """
+        c1 = self._compute_centroid(X[c1_idx])
+        c2 = self._compute_centroid(X[c2_idx])
+        return np.linalg.norm(c1 - c2)
+    
+    def fit(self, X: np.ndarray) -> None:
+        """
+        Perform agglomerative hierarchical clustering until n_clusters is reached.
+        """
+        n_samples = X.shape[0]
+
+        # Start with each point as its own cluster (slide 27)
+        clusters = [[i] for i in range(n_samples)]
+
+        # Agglomerative merging (slide 27)
+        while len(clusters) > self.n_clusters:
+
+            min_dist = float("inf")
+            merge_pair = None
+
+            # Compute distance betwenn all cluster pairs
+            for i in range(len(clusters)):
+                for j in range(i + 1, len(clusters)):
+
+                    dist = self._cluster_distance(X, clusters[i], clusters[j])
+                    if dist < min_dist:
+                        min_dist = dist
+                        merge_pair = (i, j)
+
+            # Merge the two closest clusters
+            i, j = merge_pair
+            new_cluster = clusters[i] + clusters[j]
+
+            # Remove old clusters and append merged cluster
+            clusters.pop(max(i, j))
+            clusters.pop(min(i, j))
+            clusters.append(new_cluster)
+
+        # Assign final labels
+        labels = np.zeros(n_samples, dtype=int)
+        for cluster_id, idxs in enumerate(clusters):
+            labels[idxs] = cluster_id
+
+        self.labels_ = labels
+        self.fitted = True
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        if not self.fitted:
+            raise RuntimeError("Model is not fitted yet.")
+        return self.labels_
