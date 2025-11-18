@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from loguru import logger
-import re
+
+from typing import Optional
 
 def load_metadata(csv_path: str | Path) -> pd.DataFrame:
     """Load movie metadata CSV and keep IMDb rating only."""
-    import ast
 
     df = pd.read_csv(csv_path)
     df.columns = [c.strip().lower() for c in df.columns]
@@ -51,7 +51,11 @@ def load_dataset(features_dir="data/ctms", metadata_csv="data/metadata/movies_me
     metadata_df = load_metadata(metadata_csv)
     return matrices_df, metadata_df
 
-def load_sequences(base_dir: str | Path = "data/sequences", file_extension: str = ".npy") -> pd.DataFrame:
+def load_sequences(
+    base_dir: str | Path = "data/sequences", 
+    file_extension: str = ".npy",
+    metadata: Optional[str | Path] = None
+) -> pd.DataFrame:
     """
     Recursively load all musical sequences for movie themes from .npy files into a DataFrame.
     Each row: piece_id (IMDb), sequence (np.ndarray), path.
@@ -75,12 +79,18 @@ def load_sequences(base_dir: str | Path = "data/sequences", file_extension: str 
             logger.warning(f"Error loading {npy_path}: {e}")
             continue
 
-    df = pd.DataFrame(records, index=[r['id'] for r in records])
-    df.sort_index(inplace=True)
-    df.index.name = 'id'
-    logger.success(f"Loaded {len(df)} sequences from {base_dir}")
-    return df
+    sequences_df = pd.DataFrame(records, index=[r['id'] for r in records])
+    sequences_df.sort_index(inplace=True)
+    sequences_df.index.name = 'id'
 
+    if metadata:
+        logger.info(f"Loading metadata from {metadata} and merging")
+        metadata_df = load_metadata(metadata)
+        sequences_df = sequences_df.join(metadata_df, how='left')
+
+    logger.success(f"Loaded {len(sequences_df)} sequences from {base_dir}")
+    
+    return sequences_df
 
 
 if __name__ == "__main__":
