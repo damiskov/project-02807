@@ -7,27 +7,36 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from loguru import logger
 
-from utils.load import load_sequences
+from utils.load import load_metadata
 
-def plot_raw_midi_sequence(sequence: np.ndarray, title: str = "Raw MIDI Sequence"):
-    """Plot a raw MIDI sequence as a piano roll."""
+from pretty_midi import PrettyMIDI
+
+def load_raw_midi(
+    file_path: str,
+    fs: int = 1
+) -> np.ndarray:
+    """Load a raw MIDI sequence from a .midi file."""
+    midi_data = PrettyMIDI(file_path)
+    # Convert to piano roll representation
+    piano_roll = midi_data.get_piano_roll(fs=fs)  # fs: frames per second
+    return piano_roll
+    
+
+def plot_midi_roll(piano_roll: np.ndarray, title: str = "MIDI Piano Roll"):
+    """Plot a piano roll representation of MIDI data."""
     plt.figure(figsize=(12, 6))
-    plt.imshow(sequence.T, aspect='auto', cmap='gray_r', origin='lower')
-    plt.colorbar(label='Velocity')
+    plt.imshow(piano_roll, aspect='auto', origin='lower', cmap='viridis')
     plt.title(title)
-    plt.xlabel('Time Step')
+    plt.xlabel('Time (frames)')
     plt.ylabel('MIDI Note Number')
-    plt.yticks(ticks=np.arange(0, 128, 12), labels=np.arange(0, 128, 12))
-    plt.grid(False)
+    plt.colorbar(label='Velocity')
+    plt.tight_layout()
     plt.show()
+    
 
 
 if __name__ == "__main__":
-    
-    sequences_df = load_sequences(base_dir="data/sequences", file_extension=".npy", metadata="data/metadata/movies_metadata.csv")
-    logger.info(f"Loaded {len(sequences_df)} sequences.")
-
-    # Plot a random sample of 3 sequences
-    sample_sequences = sequences_df.sample(n=3, random_state=42)
-    for idx, row in sample_sequences.iterrows():
-        plot_raw_midi_sequence(row['sequence'], title=f"Raw MIDI Sequence: {row.get('title', 'Unknown Title')}")
+    metadata = load_metadata("data/metadata/movies_metadata.csv")
+    path = "/Users/davidmiles-skov/Desktop/fall_25/02807_comp_tools/project-02807/data/midis/tt0080684.mid"
+    piano_roll = load_raw_midi(path)
+    plot_midi_roll(piano_roll, title="Piano Roll for tt0080684.mid")
