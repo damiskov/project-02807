@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA
+from scipy.cluster.hierarchy import linkage, dendrogram
 
 def pitch_class_normalization(sequence: List[int]) -> List[int]:
     """Convert a sequence of MIDI pitches to pitch classes (0-11), removing pauses (128)."""
@@ -132,8 +133,15 @@ def plot_clusters(
     
     ax.set_title(title)
     plt.colorbar(scatter, label="Cluster")
+    plt.show()
 
-    if save_mode:
-        plt.savefig(f"figs/{title.replace(' ', '_').lower()}.png")
-    else:
-        plt.show()
+def plot_dendrogram(X, method="ward", title="Hierarchical Clustering Dendrogram"):
+
+    linked = linkage(X, method=method)
+
+    plt.figure(figsize=(12, 6))
+    dendrogram(linked, truncate_mode="level", p=20)
+    plt.title(title)
+    plt.xlabel("Samples")
+    plt.ylabel("Distance")
+    plt.show()
