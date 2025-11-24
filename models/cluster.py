@@ -69,11 +69,78 @@ class KMeansClusterModel(ClusterModel):
         distances = np.linalg.norm(X[:, np.newaxis] - self.centroids, axis=2)
         return np.argmin(distances, axis=1)
     
-# TODO: Irene - DBSCAN implementation
+
+# --- DBSCAN Cluster Model ---
 
 @dataclass
 class DBSCANClusterModel(ClusterModel):
-    ... # Implementation goes here
+    """DBSCAN clustering model implemented from scratch."""
+
+    eps: float = 0.6
+    min_samples: int = 5
+    labels_: Optional[np.ndarray] = None
+    fitted: bool = False
+
+    # Internal states
+    UNVISITED: int = -99
+    NOISE: int = -1
+
+    def fit(self, X: np.ndarray) -> None:
+        """Assign cluster labels using the DBSCAN algorithm."""
+        n = X.shape[0]
+        self.labels_ = np.full(n, self.UNVISITED, dtype=int)
+        cluster_id = 0
+
+        for i in range(n):
+            if self.labels_[i] != self.UNVISITED:
+                continue
+
+            neighbors = self._region_query(X, i)
+            if len(neighbors) < self.min_samples:
+                self.labels_[i] = self.NOISE
+                continue
+
+            self._expand_cluster(X, i, neighbors, cluster_id)
+            cluster_id += 1
+
+        self.fitted = True
+
+    def _region_query(self, X: np.ndarray, idx: int) -> List[int]:
+        """Return all points within eps distance of point idx."""
+        distances = np.linalg.norm(X - X[idx], axis=1)
+        return np.where(distances <= self.eps)[0].tolist()
+
+    def _expand_cluster(
+        self,
+        X: np.ndarray,
+        seed_idx: int,
+        neighbors: List[int],
+        cluster_id: int,
+    ) -> None:
+        """Grow a new cluster starting from the seed point."""
+        self.labels_[seed_idx] = cluster_id
+        queue = list(neighbors)
+        q = 0
+
+        while q < len(queue):
+            j = queue[q]
+
+            if self.labels_[j] == self.UNVISITED:
+                self.labels_[j] = cluster_id
+                new_neighbors = self._region_query(X, j)
+                if len(new_neighbors) >= self.min_samples:
+                    queue.extend(new_neighbors)
+
+            elif self.labels_[j] == self.NOISE:
+                self.labels_[j] = cluster_id
+
+            q += 1
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Return cluster labels assigned during fit()."""
+        if not self.fitted:
+            raise RuntimeError("Model is not fitted yet.")
+        return self.labels_
 
 
 @dataclass
