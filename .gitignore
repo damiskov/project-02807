@@ -1,4 +1,5 @@
 data/midis/*
+data/ctms
 *.midi
 tests/*
 # Byte-compiled / optimized / DLL files

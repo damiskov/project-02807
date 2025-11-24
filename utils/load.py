@@ -17,24 +17,93 @@ def load_metadata(csv_path: str | Path) -> pd.DataFrame:
 
     return df
 
-def load_feature_matrices(base_dir: str | Path) -> pd.DataFrame:
+from pathlib import Path
+import pandas as pd
+import numpy as np
+from tqdm import tqdm
+from loguru import logger
+
+def load_feature_matrices_aligned(base_dir="data/ctms", metadata_csv="data/metadata/videogames_metadata.csv"):
     """
-    Recursively load all .npy chord trajectory matrices for movie themes into a DataFrame.
-    Each row: piece_id (IMDb), matrix (np.ndarray), path.
+    Load all CTM matrices and align them with videogame metadata.
+    Assumes structure: base_dir/v<game_id>/song_name.npy
+    Returns matrices_df with game metadata merged.
     """
     base_dir = Path(base_dir)
     records = []
-    for npy_path in tqdm(base_dir.rglob("*.npy"), desc="Loading matrices"):
-        # Use filename stem as IMDb ID
-        piece_id = npy_path.stem.replace("_traj", "")
-        
+
+    for npy_path in tqdm(base_dir.rglob("*.npy"), desc="Loading CTMs"):
+        piece_id = npy_path.stem  # e.g., v281495_song_A
         try:
+            matrix = np.load(npy_path)
+            # Extract videogame ID from directory name (vXXXX)
+            match = npy_path.parts[-2]  # parent directory, e.g., v281495
+            game_id = int(match.lstrip("v"))
+
+            records.append({
+                "id": piece_id,
+                "matrix": matrix,
+                "path": str(npy_path),
+                "game_id": game_id
+            })
+        except Exception as e:
+            logger.warning(f"Error loading {npy_path}: {e}")
+            continue
+
+    matrices_df = pd.DataFrame(records)
+    matrices_df.sort_values("id", inplace=True)
+    matrices_df.set_index("id", inplace=True)
+
+    # Load metadata and align by game_id
+    metadata_df = pd.read_csv(metadata_csv)
+    metadata_df.set_index("id", inplace=True)
+    # Keep only rows corresponding to available game_ids
+    metadata_df = metadata_df.loc[metadata_df.index.intersection(matrices_df["game_id"].unique())]
+
+    # Merge metadata into matrices_df
+    matrices_df = matrices_df.merge(metadata_df, left_on="game_id", right_index=True, how="left")
+
+    logger.success(f"Loaded {len(matrices_df)} matrices aligned with {len(metadata_df)} games")
+    return matrices_df, metadata_df
+
+def load_feature_matrices(base_dir: str | Path) -> pd.DataFrame:
+    """
+    Recursively load all .npy chord trajectory matrices for videogame soundtracks into a DataFrame.
+    Each row: piece_id (console_vID_midiname), matrix (np.ndarray), path.
+    
+    Assumes folder structure:
+        base_dir/
+            console_name/
+                v<ID>/
+                    *.npy
+    """
+    base_dir = Path(base_dir)
+    records = []
+
+    for npy_path in tqdm(base_dir.rglob("*.npy"), desc="Loading matrices"):
+        try:
+            # Extract console and game ID
+            game_dir = npy_path.parents[0].name       # v<ID>
+            console_name = npy_path.parents[1].name  # console_name
+
+            # Only keep numeric ID after 'v'
+            match = game_dir.lower().startswith("v") and game_dir[1:].isdigit()
+            if match:
+                game_id = game_dir
+            else:
+                game_id = game_dir
+
+            midiname = npy_path.stem.replace("_traj", "")
+            piece_id = f"{console_name}_{game_id}_{midiname}"
+
+            # Load matrix
             matrix = np.load(npy_path)
             records.append({
                 "id": piece_id,
                 "matrix": matrix,
                 "path": str(npy_path)
             })
+
         except Exception as e:
             logger.warning(f"Error loading {npy_path}: {e}")
             continue
