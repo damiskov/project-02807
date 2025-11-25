@@ -144,7 +144,7 @@ class DBSCANClusterModel(ClusterModel):
 
 
 @dataclass
-class HierarchicalCluster(ClusterModel):
+class HierarchicalClusterModel(ClusterModel):
     n_clusters: int
     method: Literal["agglomerative", "divisive"] = "agglomerative"
     labels_: Optional[np.ndarray] = None
