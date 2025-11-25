@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+
+import time
 import os
 from pathlib import Path
 from typing import List, Dict, Tuple
@@ -52,6 +54,7 @@ class DatasetBuilder_02807:
         # load metadata
         try:
             self.metadata_df = pd.read_csv(self.metadata_path)
+            logger.success(f"Loaded metadata from {self.metadata_path}, {len(self.metadata_df)} rows.")
         except Exception as e:
             raise FileNotFoundError(f"Failed to load metadata from {self.metadata_path}: {e}")
 
@@ -63,33 +66,25 @@ class DatasetBuilder_02807:
         add_pauses: bool = True,
         silence_threshold: float = 0.1,
         max_files: int | None = None,
-    ):
-        """
-        For all midi files in midi_root:
-            - load midi
-            - extract note sequence
-            - append to dataframe along with metadata
+    ) -> pd.DataFrame:
 
-        Save the resulting dataframe to out_dir/sequence_dataset.parquet
-
-        Args:
-            out_dir: directory to save the parquet file
-            add_pauses: if True, insert pause codes between notes
-            silence_threshold: minimum silence (seconds) to insert a pause
-            max_files: if set, limit to this many files
-        """
         data = []
         failures = []
 
         midi_root_path = Path(self.midi_root)
-
         midi_files = list(midi_root_path.rglob("*.mid"))
-        
+
         if max_files is not None:
             midi_files = midi_files[:max_files]
 
         for midi_path in tqdm(midi_files, desc="Building sequence dataset"):
+    
             rel_path = midi_path.relative_to(midi_root_path)
+
+            # id is the folder containing the midi file
+            id = rel_path.parent.name[1:] # remove leading 'v'
+            filename = rel_path.name
+
             # load midi
             try:
                 midi_data = self._load_midi(str(midi_path))
@@ -98,58 +93,59 @@ class DatasetBuilder_02807:
                 failures.append(str(midi_path))
                 continue
 
-            
-            # extract note sequence
+            # extract sequence
             try:
-                note_sequence = self._extract_note_sequence(
+                seq = self._extract_note_sequence(
                     midi_data,
                     add_pauses=add_pauses,
                     silence_threshold=silence_threshold,
                 )
             except Exception as e:
-                logger.error(f"Failed to extract note sequence from {midi_path}: {e}")
-                failures.append(str(midi_path))
-                continue
-            
-            # NOTE: Unsure about this
-
-            # get corresponding metadata
-            metadata_row = self.metadata_df[self.metadata_df['filename'] == rel_path.name]
-
-            if metadata_row.empty:
-                logger.warning(f"No metadata found for {rel_path.name}, skipping.")
+                logger.error(f"Failed to extract sequence {midi_path}: {e}")
+                failure_txt = f"{midi_path}: {e}"
+                failures.append(failure_txt)
                 continue
 
-            metadata_dict = metadata_row.to_dict(orient='records')[0]
+            # match metadata
+            meta = self.metadata_df[self.metadata_df["id"] == id]
 
-            # append to data
+            if meta.empty:
+                logger.warning(f"No metadata found for {filename}, skipping.")
+                continue
+
+            metadata_dict = meta.to_dict(orient="records")[0]
+
             data.append({
-                "note_sequence": note_sequence,
+                "name": filename,
+                "note_sequence": seq.tolist(),
                 **metadata_dict,
             })
+        
+        dataset_df = pd.DataFrame(data)
+
+        # save + return
+        self._save(
+            out_dir,
+            dataset_df,
+            failures,
+            "sequence_dataset.parquet",
+            "sequence_dataset_failures.txt",
+        )
+
+        return dataset_df
+
 
     def build_embedding_dataset(
         self,
         out_dir: str,
         max_files: int | None = None,
-    ):
-        """
-        For all wav files in wav_root:
-            - load audio
-            - extract embeddings (CLAP, AST, WavLM)
-            - append to dataframe along with metadata
-        Save the resulting dataframe to out_dir/embedding_dataset.parquet
+        duration: float | None = 30.0,
+    ) -> pd.DataFrame:
 
-        Args:
-            out_dir: directory to save the parquet file
-            max_files: if set, limit to this many files
-        """
-        
         data = []
         failures = []
 
         wav_root_path = Path(self.wav_root)
-
         wav_files = list(wav_root_path.rglob("*.wav"))
 
         if max_files is not None:
@@ -160,50 +156,88 @@ class DatasetBuilder_02807:
         ast_extractor, ast_model = self._load_ast()
         wavlm_extractor, wavlm_model = self._load_wavlm()
 
-        for wav_path in tqdm(wav_files, desc="Building embedding dataset"):
-            rel_path = wav_path.relative_to(wav_root_path)
+        start = time.time()
 
-            # load audio
+        for wav_path in tqdm(wav_files, desc="Building embedding dataset"):
+
+            rel_path = wav_path.relative_to(wav_root_path)
+            id = rel_path.parent.name[1:]  # remove leading 'v'
+            filename = rel_path.name
+
+            # Load audio for CLAP (48k) and AST/WavLM (16k)
             try:
-                y, sr = self._load_audio(str(wav_path), target_sr=48_000, duration=30.0)
-                y_16, sr_16 = self._load_audio(str(wav_path), target_sr=16_000, duration=30.0)
+                y_48, sr_48 = self._load_audio(str(wav_path), target_sr=48_000, duration=duration)
+                y_16, sr_16 = self._load_audio(str(wav_path), target_sr=16_000, duration=duration)
             except Exception as e:
-                logger.error(f"Failed to load audio {wav_path}: {e}")
-                failures.append(str(wav_path))
+                logger.error(f"Failed loading audio {wav_path}: {e}")
+                failure_txt = f"{wav_path}: {e}"
+                failures.append(failure_txt)
                 continue
 
-            # extract embeddings
+            # Extract embeddings
             try:
+                clap_emb = self._get_clap_embedding(clap_model, y_48, sr_48)
                 ast_emb = self._get_ast_embedding(ast_extractor, ast_model, y_16, sr_16)
                 wavlm_emb = self._get_wavlm_embedding(wavlm_extractor, wavlm_model, y_16, sr_16)
-                clap_emb = self._get_clap_embedding(clap_model, y, sr)
             except Exception as e:
-                logger.error(f"Failed to extract embeddings from {wav_path}: {e}")
-                failures.append(str(wav_path))
-                continue
-            
-            # NOTE: Unsure about this
-            # get corresponding metadata
-            metadata_row = self.metadata_df[self.metadata_df['filename'] == rel_path.with_suffix('.mid').name]
-
-            if metadata_row.empty:
-                logger.warning(f"No metadata found for {rel_path.name}, skipping.")
+                logger.error(f"Failed embeddings {wav_path}: {e}")
+                failure_txt = f"{wav_path}: {e}"
+                failures.append(failure_txt)
                 continue
 
-            metadata_dict = metadata_row.to_dict(orient='records')[0]
+            meta = self.metadata_df[self.metadata_df["id"] == id]
 
-            # append to data
+            if meta.empty:
+                logger.warning(f"No metadata for WAV {filename}")
+                failure_txt = f"{wav_path}: No metadata found"
+                failures.append(failure_txt)
+                continue
+
+            metadata_dict = meta.to_dict(orient="records")[0]
+
             data.append({
+                "filename": filename,
                 "ast": ast_emb,
                 "wavlm": wavlm_emb,
                 "clap": clap_emb,
                 **metadata_dict,
             })
-        # save to parquet
-        out_path = Path(out_dir) / "embedding_dataset.parquet"
-        df = pd.DataFrame(data)
-        df.to_parquet(out_path)
-        logger.info(f"Saved embedding dataset to {out_path}")
+        end = time.time()
+        logger.info(f"Embedding extraction time: {end - start:.2f} seconds for {len(wav_files)} files.")
+
+        dataset_df = pd.DataFrame(data)
+
+        self._save(
+            out_dir,
+            dataset_df,
+            failures,
+            "embedding_dataset.parquet",
+            "embedding_dataset_failures.txt",
+        )
+
+        return dataset_df
+
+
+    def _save(
+        self,
+        out_dir: str,
+        dataset_df: pd.DataFrame,
+        failures: List[str],
+        dataset_filename: str,
+        failures_filename: str,
+    ) -> None:
+
+        out_path = Path(out_dir) / dataset_filename
+        dataset_df.to_parquet(out_path)
+        logger.info(f"Saved dataset to {out_path}")
+
+        out_path_falures = Path(out_dir) / failures_filename
+
+        with open(out_path_falures, "w") as f:
+            for item in failures:
+                f.write(f"{item}\n")
+        logger.info(f"Saved failures to {out_path_falures}")
+
 
 
     # ---- Data Loading ----
@@ -293,7 +327,7 @@ class DatasetBuilder_02807:
 
     # ---- generate embeddings ----
 
-    def _get_clap_embedding(clap_model: CLAP, y: np.ndarray, sr: int = 48_000) -> np.ndarray:
+    def _get_clap_embedding(self, clap_model: CLAP, y: np.ndarray, sr: int = 48_000) -> np.ndarray:
         """
         CLAP embedding (msclap).
 
@@ -339,6 +373,54 @@ class DatasetBuilder_02807:
         return emb.squeeze(0).cpu().numpy()
 
 
+    # def _get_wavlm_embedding(
+    #     self,
+    #     wavlm_extractor: Wav2Vec2FeatureExtractor,
+    #     wavlm_model: WavLMModel,
+    #     y: np.ndarray,
+    #     sr: int = 48_000,
+    # ) -> np.ndarray:
+    #     """
+    #     WavLM embedding.
+
+    #     Args:
+    #         wavlm_extractor: WavLM feature extractor
+    #         wavlm_model:     WavLM model
+    #         y:               audio samples, shape (num_samples,)
+    #         sr:              sampling rate (Hz)
+
+    #     Returns:
+    #         np.ndarray of shape (embedding_dim,)
+    #     """
+    #     inputs = wavlm_extractor(
+    #         y, sampling_rate=sr, return_tensors="pt", padding=True
+    #     )
+    #     with torch.no_grad():
+    #         outputs = wavlm_model(**inputs)
+    #     embedding = outputs.last_hidden_state.mean(dim=1).squeeze(0).numpy()
+    #     return embedding
+
+    def _get_ast_embedding(self, extractor, model, y, sr) -> np.ndarray:
+        """
+        AST embedding with statistical pooling (mean + std).
+        Output shape: (1536,)
+        """
+        target_sr = 16000
+        if sr != target_sr:
+            y = scipy.signal.resample_poly(y, target_sr, sr).astype(np.float32)
+
+        inputs = extractor(y, sampling_rate=target_sr, return_tensors="pt")
+
+        with torch.no_grad():
+            out = model(**inputs)
+            hidden = out.last_hidden_state.squeeze(0)   # (T, 768)
+
+        mean = hidden.mean(dim=0)                      # (768,)
+        std = hidden.std(dim=0)                        # (768,)
+        pooled = torch.cat([mean, std], dim=0)         # (1536,)
+
+        return pooled.cpu().numpy()
+    
     def _get_wavlm_embedding(
         self,
         wavlm_extractor: Wav2Vec2FeatureExtractor,
@@ -347,24 +429,23 @@ class DatasetBuilder_02807:
         sr: int = 48_000,
     ) -> np.ndarray:
         """
-        WavLM embedding.
-
-        Args:
-            wavlm_extractor: WavLM feature extractor
-            wavlm_model:     WavLM model
-            y:               audio samples, shape (num_samples,)
-            sr:              sampling rate (Hz)
-
-        Returns:
-            np.ndarray of shape (embedding_dim,)
+        WavLM embedding with statistical pooling (mean + std).
+        Output shape: (1536,)
         """
         inputs = wavlm_extractor(
             y, sampling_rate=sr, return_tensors="pt", padding=True
         )
+
         with torch.no_grad():
-            outputs = wavlm_model(**inputs)
-        embedding = outputs.last_hidden_state.mean(dim=1).squeeze(0).numpy()
-        return embedding
+            out = wavlm_model(**inputs)
+            hidden = out.last_hidden_state.squeeze(0)   # (T, 768)
+
+        mean = hidden.mean(dim=0)                      # (768,)
+        std = hidden.std(dim=0)                        # (768,)
+        pooled = torch.cat([mean, std], dim=0)         # (1536,)
+
+        return pooled.cpu().numpy()
+
 
     # ---- note sequences ----
 
@@ -404,4 +485,20 @@ class DatasetBuilder_02807:
 
 
 
+if __name__ == "__main__":
 
+    builder = DatasetBuilder_02807(
+        metadata_path="dataset_construction/metadata_cleaned.csv",
+        midi_root="dataset_construction/data/midi",
+        wav_root="dataset_construction/data/wav",
+    )
+
+    # seq_df = builder.build_sequence_dataset(
+    #     out_dir="dataset_construction/data/sequences",
+    #     add_pauses=True,
+    #     silence_threshold=0.1,
+    # )
+    # emb_df = builder.build_embedding_dataset(
+    #     out_dir="dataset_construction/data/embeddings",
+    #     duration=10.0,
+    # )

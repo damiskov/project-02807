@@ -1,0 +1,3 @@
+dataset_construction/data/wav/ds/v8225/Main_Theme.wav: Argument #4: Padding size should be less than the corresponding input dimension, but got: padding (512, 512) at dimension 2 of input [1, 1, 65]
+dataset_construction/data/wav/ds/v22301/Main_Lobby.wav: Argument #4: Padding size should be less than the corresponding input dimension, but got: padding (512, 512) at dimension 2 of input [1, 1, 65]
+dataset_construction/data/wav/ds/v22301/Piranha_Plant_s_Lullaby.wav: Argument #4: Padding size should be less than the corresponding input dimension, but got: padding (512, 512) at dimension 2 of input [1, 1, 65]

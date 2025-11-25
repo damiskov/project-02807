@@ -1,0 +1,15 @@
+dataset_construction/data/midi/gamecube/v2239/Night_Comes.mid, data byte must be in range 0..127
+dataset_construction/data/midi/gamecube/v4105/Lava_Shelter.mid, data byte must be in range 0..127
+dataset_construction/data/midi/gamecube/v1627/Zelda_s_Transformation.mid, data byte must be in range 0..127
+dataset_construction/data/midi/segacd/v5451/Ending_Theme.mid, data byte must be in range 0..127
+dataset_construction/data/midi/segacd/v5334/Goddess_s_Tower.mid, data byte must be in range 0..127
+dataset_construction/data/midi/ds/v8225/Main_Theme.mid, list index out of range
+dataset_construction/data/midi/ds/v315317/Riddle.mid, data byte must be in range 0..127
+dataset_construction/data/midi/xbox360/v3008/Showdown_Town_(LOG_s_Factory).mid, data byte must be in range 0..127
+dataset_construction/data/midi/xbox360/v3008/Hero_Klungo_Sssavesss_Teh_World!_Level.mid, data byte must be in range 0..127
+dataset_construction/data/midi/wii/v1723/Sheep_Man_s_Stage_-_Cybersheep_s_Dream.mid, data byte must be in range 0..127
+dataset_construction/data/midi/wii/v2178/World_Map_3_-_Penguin_Playground_(2).mid, data byte must be in range 0..127
+dataset_construction/data/midi/wii/v229246/Beach_Bowl_Galaxy.mid, data byte must be in range 0..127
+dataset_construction/data/midi/wii/v229246/Kamella_Battle.mid, data byte must be in range 0..127
+dataset_construction/data/midi/wii/v134014/Midna_s_Theme.mid, data byte must be in range 0..127
+dataset_construction/data/midi/wii/v134014/Faron_Woods.mid, Could not decode key with 0 flats and mode 154
