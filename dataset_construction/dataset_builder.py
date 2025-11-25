@@ -4,13 +4,16 @@ from dataclasses import dataclass
 import time
 import os
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from loguru import logger
 
+
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 # audio processing
 import torch
@@ -106,6 +109,14 @@ class DatasetBuilder_02807:
                 failures.append(failure_txt)
                 continue
 
+            try:
+                ctm = self._generate_ctm_from_seq(seq)
+            except Exception as e:
+                logger.error(f"Failed to generate CTM {midi_path}: {e}")
+                failure_txt = f"{midi_path}: {e}"
+                failures.append(failure_txt)
+                continue
+
             # match metadata
             meta = self.metadata_df[self.metadata_df["id"] == id]
 
@@ -118,6 +129,7 @@ class DatasetBuilder_02807:
             data.append({
                 "name": filename,
                 "note_sequence": seq.tolist(),
+                "ctm": ctm.tolist(), # ctm is 129x129 np.ndarray
                 **metadata_dict,
             })
         
@@ -373,33 +385,6 @@ class DatasetBuilder_02807:
         return emb.squeeze(0).cpu().numpy()
 
 
-    # def _get_wavlm_embedding(
-    #     self,
-    #     wavlm_extractor: Wav2Vec2FeatureExtractor,
-    #     wavlm_model: WavLMModel,
-    #     y: np.ndarray,
-    #     sr: int = 48_000,
-    # ) -> np.ndarray:
-    #     """
-    #     WavLM embedding.
-
-    #     Args:
-    #         wavlm_extractor: WavLM feature extractor
-    #         wavlm_model:     WavLM model
-    #         y:               audio samples, shape (num_samples,)
-    #         sr:              sampling rate (Hz)
-
-    #     Returns:
-    #         np.ndarray of shape (embedding_dim,)
-    #     """
-    #     inputs = wavlm_extractor(
-    #         y, sampling_rate=sr, return_tensors="pt", padding=True
-    #     )
-    #     with torch.no_grad():
-    #         outputs = wavlm_model(**inputs)
-    #     embedding = outputs.last_hidden_state.mean(dim=1).squeeze(0).numpy()
-    #     return embedding
-
     def _get_ast_embedding(self, extractor, model, y, sr) -> np.ndarray:
         """
         AST embedding with statistical pooling (mean + std).
@@ -481,8 +466,25 @@ class DatasetBuilder_02807:
             seq.append(notes[i][2])
     
         return np.array(seq)
+    
 
+    # --- generate ctms ---
 
+    def _generate_ctm_from_seq(
+        self,
+        sequence: List[int],
+        num_notes: int = 129,
+    ) -> np.ndarray:
+        """Construct 129x129 chord trajectory matrix."""
+        
+        M = np.zeros((num_notes, num_notes), dtype=np.int32)
+        
+        for i in range(len(sequence) - 1):
+        
+            a, b = sequence[i], sequence[i + 1]
+            M[a, b] += 1
+        
+        return M
 
 
 if __name__ == "__main__":
@@ -493,11 +495,11 @@ if __name__ == "__main__":
         wav_root="dataset_construction/data/wav",
     )
 
-    # seq_df = builder.build_sequence_dataset(
-    #     out_dir="dataset_construction/data/sequences",
-    #     add_pauses=True,
-    #     silence_threshold=0.1,
-    # )
+    seq_df = builder.build_sequence_dataset(
+        out_dir="dataset_construction/data/sequences",
+        add_pauses=True,
+        silence_threshold=0.1,
+    )
     # emb_df = builder.build_embedding_dataset(
     #     out_dir="dataset_construction/data/embeddings",
     #     duration=10.0,
