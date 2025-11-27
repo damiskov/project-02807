@@ -5,6 +5,39 @@ from tqdm import tqdm
 from loguru import logger
 import re
 
+# -- updated loading functions ---
+
+def clean_text(s: str) -> str:
+    """Clean text (metadata)"""
+    s = s.lower()
+    s = re.sub(r"[^a-z0-9 ]+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s.strip()
+
+
+def join_list(x):
+    """Convert lists to space-joined strings and handle missing values."""
+    if isinstance(x, list):
+        return " ".join(map(str, x))
+    return "" if pd.isna(x) else str(x)
+
+def load_embeddings(path: str) -> pd.DataFrame:
+    """Load embeddings CSV and preprocess certain columns."""
+    df = pd.read_parquet(path)
+
+    # add metadata column
+    df["metadata"] = (
+        df["name"].apply(join_list) + " " +
+        df["themes"].apply(join_list) + " " +
+        df["keywords"].apply(join_list) + " " +
+        df["involved_companies"].apply(join_list)
+    )
+    df["metadata"] = df["metadata"].apply(clean_text)
+    return df
+        
+
+# --- old shit ---
+
 def load_metadata(csv_path: str | Path) -> pd.DataFrame:
     """Load movie metadata CSV and keep IMDb rating only."""
     import ast
@@ -80,22 +113,3 @@ def load_sequences(base_dir: str | Path = "data/sequences", file_extension: str 
     df.index.name = 'id'
     logger.success(f"Loaded {len(df)} sequences from {base_dir}")
     return df
-
-
-
-if __name__ == "__main__":
-    matrices, meta = load_dataset()
-    logger.info(f"Matrix sample:\n{matrices.head()}")
-    logger.info(f"Metadata sample:\n{meta.head()}")
-
-    # save the first matrix to verify
-    # random int
-    # random_int = np.random.randint(0, len(matrices))
-    # sample_matrix = matrices.iloc[random_int]['matrix']
-    # name = matrices.iloc[random_int]['piece_name']
-    
-    # import matplotlib.pyplot as plt
-    # plt.imshow(sample_matrix, cmap='hot', interpolation='nearest')
-    # plt.title(f"Chord Trajectory Matrix Sample: {name}")
-    # plt.colorbar()
-    # plt.show()

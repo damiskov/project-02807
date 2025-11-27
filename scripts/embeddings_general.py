@@ -1,34 +1,36 @@
+"""
+Applying general clustering algorithms to PCA-reduced embedding representations.
+"""
+import json
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-import json
+from typing import Dict
 
 from loguru import logger
-
-from typing import Optional, Dict
 
 # sklearn
 from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
 
-# internal
+# models
 from models.cluster import ClusterModel
 from models.cluster import KMeansClusterModel
 from models.cluster import DBSCANClusterModel
 from models.cluster import HierarchicalClusterModel
 
-# --- helpers --
+# utils
+from utils.load import load_embeddings
+from utils.tf_idf import tfidf_cluster_summary
+from utils.tf_idf import tfidf_cluter_per_column
 
-def load_embeddings(path: str):
-    """Load embeddings dataset from parquet file."""
-    return pd.read_parquet(path)
+# --- helpers --
 
 def embedding_to_array(embedding_series: pd.Series) -> np.ndarray:
     """Convert a pandas Series of embeddings to a 2D numpy array."""
     return np.vstack(embedding_series.to_numpy())
-
 
 def reduce_embedding_dim(embeddings_df: pd.DataFrame, model_name: str) -> pd.DataFrame:
     """Standardise and reduce dimensionality of embeddings using PCA."""
@@ -43,7 +45,7 @@ def reduce_embedding_dim(embeddings_df: pd.DataFrame, model_name: str) -> pd.Dat
     embeddings_scaled = scaler.fit_transform(embedding_array)
 
     # PCA
-    pca = PCA()  # or PCA(n_components=min(len(df), embedding_array.shape[1]))
+    pca = PCA()  
     embeddings_pca = pca.fit_transform(embeddings_scaled)
 
     # Determine dims for >=90% variance
@@ -181,12 +183,14 @@ def test_hierarchical(
 
     
 
+# --- main pipelines ---
 
-# --- main pipeline ---
-
-def main(
+def cluster_tuning(
     embeddings_df: pd.DataFrame,
-    model_name: str
+    model_name: str,
+    kmeans_k_values: list[int] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20],
+    dbscan_eps_values: list[float] = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0],
+    hierarchical_n_clusters_values: list[int] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
 ):
     """
     Main function which performs the following pipeline:
@@ -197,46 +201,71 @@ def main(
         - KMeans clustering
         - DBSCAN clustering
         - Hierarchical clustering for visualization
+    5. Logs silhoueetette scores for each clustering method.
+    6. Saves the results to JSON files.
 
     logs: dimensionality reduction (PCA dim for >=90% explained var) and clustering results (silhouette scores).
     """
 
     reduce_embedding_dim(embeddings_df, model_name)
-
+    kmeans_scores = test_kmeans(embeddings_df, model_name, kmeans_k_values)
+    dbscan_scores = test_dbscan(embeddings_df, model_name, dbscan_eps_values)
+    # NOTE: Hierarchical takes a long time
+    # hierarchical_scores = test_hierarchical(embeddings_df, model_name, hierarchical_n_clusters_values)
+    return {
+        "kmeans": kmeans_scores,
+        "dbscan": dbscan_scores,
+        # "hierarchical": hierarchical_scores
+    }
     
 
+def cluster_analysis(
+    embeddings_df: pd.DataFrame,
+    model_name: str,
+    clustering_model: ClusterModel,
+):
+    """
+    Main function which performs the following pipeline:
+    1. Standardizes the embeddings.
+    2. Reduces dimensionality using PCA.
+    3. Applies the specified clustering algorithm.
+    4. Performs TF-IDF analysis per cluster on relevant columns.
+    """
+
+    embeddings_reduced_df = reduce_embedding_dim(embeddings_df, model_name)
+    clustered_df = apply_clustering(embeddings_reduced_df, clustering_model, model_name)
+    tfidf_results = tfidf_cluster_summary(
+        clustered_df,
+        save_path=f"results/embedding_general/{model_name}_{clustering_model.name}_tfidf_summary.json",
+        k=10,
+        ngram_range=(1, 2),
+        min_df=1,
+        max_df=0.8,
+    )
+    tfidf_cluter_per_column(
+        clustered_df,
+        text_columns=["name", "themes", "keywords", "involved_companies"],
+        save_path=f"results/embedding_general/{model_name}_{clustering_model.name}_tfidf_per_column.json",
+        k=10,
+        ngram_range=(1, 2),
+        min_df=1,
+        max_df=0.8,
+    )
+
+    return tfidf_results
 
 
 if __name__ == "__main__":
 
+    model_names = ["ast", "clap", "wavlm"]
     embeddings_df = load_embeddings("data/videogame_embeddings/embedding_dataset.parquet")
-    logger.info(f"Loaded embeddings dataset with shape: {embeddings_df.shape}")
-    # print the columns
-    logger.info(f"Columns: {embeddings_df.columns.tolist()}")
 
-    logger.debug(f"Embeddings head:\n{embeddings_df.head()}")
+    for model_name in model_names:
 
-
-    model_name = "ast"
-    embeddings_reduced_df = reduce_embedding_dim(embeddings_df, model_name)
-
-    # test different clustering algorithms
-    k_values = np.arange(2, 21).tolist()
-    kmeans_scores = test_kmeans(embeddings_reduced_df, model_name, k_values)
-    
-    eps_values = np.arange(0.1, 5.1, 0.5).tolist()
-    dbscan_scores = test_dbscan(embeddings_reduced_df, model_name, eps_values)
-
-    n_clusters_values = np.arange(2, 21).tolist()
-    hierarchical_scores = test_hierarchical(embeddings_reduced_df, model_name, n_clusters_values)
-
-    # save all the scores to json files
-    path = f"results/embedding_general/{model_name}_clustering_scores.json"
-    all_scores = {
-        "kmeans": kmeans_scores,
-        "dbscan": dbscan_scores,
-        "hierarchical": hierarchical_scores
-    }
-    with open(path, "w") as f:
-        json.dump(all_scores, f, indent=4)
-    logger.info(f"Saved clustering scores to {path}")
+        # Example: KMeans clustering analysis
+        kmeans_model = KMeansClusterModel(n_clusters=10)
+        tfidf_results = cluster_analysis(
+            embeddings_df,
+            model_name,
+            kmeans_model,
+        )

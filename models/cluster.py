@@ -31,6 +31,7 @@ class KMeansClusterModel(ClusterModel):
     """K-Means clustering model implemented from scratch."""
 
     n_clusters: int
+    name: str = "kmeans"
     max_iters: int = 100
     tol: float = 1e-4
     random_state: Optional[int] = None
@@ -76,6 +77,7 @@ class KMeansClusterModel(ClusterModel):
 class DBSCANClusterModel(ClusterModel):
     """DBSCAN clustering model implemented from scratch."""
 
+    name: str = "dbscan"
     eps: float = 0.6
     min_samples: int = 5
     labels_: Optional[np.ndarray] = None
@@ -145,7 +147,9 @@ class DBSCANClusterModel(ClusterModel):
 
 @dataclass
 class HierarchicalClusterModel(ClusterModel):
+
     n_clusters: int
+    name: str = "hierarchical"
     method: Literal["agglomerative", "divisive"] = "agglomerative"
     labels_: Optional[np.ndarray] = None
     fitted: bool = False

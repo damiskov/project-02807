@@ -1,0 +1,502 @@
+{
+    "4": {
+        "name": [
+            "legend",
+            "legend zelda",
+            "zelda",
+            "halo",
+            "zelda twilight",
+            "twilight princess",
+            "twilight",
+            "princess",
+            "final",
+            "fantasy"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "fiction",
+            "science fiction",
+            "science",
+            "action science",
+            "horror",
+            "fantasy science",
+            "warfare"
+        ],
+        "keywords": [
+            "zelda motion",
+            "zelda",
+            "motion control",
+            "control",
+            "motion",
+            "advergame",
+            "nintendo",
+            "cast",
+            "player",
+            "prequel"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "development",
+            "nintendo ead",
+            "ead",
+            "software",
+            "group",
+            "software development",
+            "ead software",
+            "development group",
+            "square"
+        ]
+    },
+    "9": {
+        "name": [
+            "super",
+            "bros",
+            "super smash",
+            "smash bros",
+            "smash",
+            "final",
+            "fantasy",
+            "final fantasy",
+            "bros melee",
+            "melee"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "science",
+            "fiction",
+            "science fiction",
+            "action science",
+            "fantasy science",
+            "historical",
+            "fantasy historical"
+        ],
+        "keywords": [
+            "motion",
+            "zelda motion",
+            "cast",
+            "zelda",
+            "character",
+            "game",
+            "motion control",
+            "control",
+            "console",
+            "player"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "ead",
+            "nintendo ead",
+            "square",
+            "development",
+            "laboratory",
+            "hal laboratory",
+            "hal",
+            "gradiente",
+            "laboratory gradiente"
+        ]
+    },
+    "0": {
+        "name": [
+            "mega man",
+            "mega",
+            "man",
+            "sonic",
+            "mario",
+            "adventure",
+            "super",
+            "zx",
+            "man zx",
+            "sonic adventure"
+        ],
+        "themes": [
+            "fiction",
+            "science fiction",
+            "science",
+            "action science",
+            "fantasy",
+            "action fantasy",
+            "comedy",
+            "kids",
+            "fantasy science",
+            "party"
+        ],
+        "keywords": [
+            "digital",
+            "boss",
+            "distribution",
+            "digital distribution",
+            "protagonist",
+            "wii",
+            "character",
+            "game",
+            "nintendo",
+            "platforms"
+        ],
+        "involved_companies": [
+            "capcom",
+            "nintendo",
+            "inti",
+            "inti creates",
+            "creates",
+            "creates capcom",
+            "sega",
+            "team",
+            "sonic",
+            "sonic team"
+        ]
+    },
+    "1": {
+        "name": [
+            "final",
+            "fantasy",
+            "final fantasy",
+            "legend",
+            "legend zelda",
+            "zelda",
+            "kingdom",
+            "kingdom hearts",
+            "hearts",
+            "princess"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "fiction",
+            "science fiction",
+            "science",
+            "action science",
+            "comedy",
+            "fantasy science",
+            "romance"
+        ],
+        "keywords": [
+            "motion",
+            "cast",
+            "zelda motion",
+            "zelda",
+            "motion control",
+            "control",
+            "advergame",
+            "protagonist",
+            "boss",
+            "time"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "square",
+            "development",
+            "capcom",
+            "nintendo ead",
+            "ead",
+            "group",
+            "software",
+            "software development",
+            "development group"
+        ]
+    },
+    "3": {
+        "name": [
+            "mario",
+            "super",
+            "crossing",
+            "animal crossing",
+            "animal",
+            "mario kart",
+            "kart",
+            "bros",
+            "ds",
+            "man"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "science fiction",
+            "science",
+            "fiction",
+            "kids",
+            "comedy",
+            "action science",
+            "sandbox"
+        ],
+        "keywords": [
+            "console",
+            "wii",
+            "character",
+            "virtual console",
+            "game",
+            "virtual",
+            "wii virtual",
+            "boss",
+            "protagonist",
+            "digital"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "nintendo ead",
+            "ead",
+            "capcom",
+            "nintendo nintendo",
+            "ead nintendo",
+            "group",
+            "laboratory",
+            "hal laboratory",
+            "hal"
+        ]
+    },
+    "6": {
+        "name": [
+            "fantasy",
+            "final",
+            "final fantasy",
+            "shenmue",
+            "hearts",
+            "kingdom",
+            "kingdom hearts",
+            "halo",
+            "zelda",
+            "legend zelda"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "fiction",
+            "science",
+            "science fiction",
+            "fantasy science",
+            "romance",
+            "drama",
+            "fiction drama"
+        ],
+        "keywords": [
+            "motion",
+            "cast",
+            "save",
+            "zelda motion",
+            "zelda",
+            "time",
+            "motion control",
+            "control",
+            "protagonist",
+            "magic"
+        ],
+        "involved_companies": [
+            "square",
+            "nintendo",
+            "development",
+            "division",
+            "product development",
+            "product",
+            "development division",
+            "square square",
+            "square product",
+            "square enix"
+        ]
+    },
+    "7": {
+        "name": [
+            "legend zelda",
+            "legend",
+            "zelda",
+            "fantasy",
+            "final",
+            "final fantasy",
+            "twilight",
+            "twilight princess",
+            "zelda twilight",
+            "princess"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "comedy",
+            "science fiction",
+            "science",
+            "fiction",
+            "action comedy",
+            "fantasy science",
+            "sandbox"
+        ],
+        "keywords": [
+            "zelda motion",
+            "zelda",
+            "motion",
+            "motion control",
+            "control",
+            "time",
+            "cast",
+            "boss",
+            "protagonist",
+            "game"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "nintendo ead",
+            "ead",
+            "group",
+            "development",
+            "nintendo nintendo",
+            "software",
+            "ead software",
+            "software development",
+            "development group"
+        ]
+    },
+    "8": {
+        "name": [
+            "sonic",
+            "man",
+            "mega",
+            "mega man",
+            "sonic adventure",
+            "adventure",
+            "fatal fury",
+            "fury",
+            "fatal",
+            "gear"
+        ],
+        "themes": [
+            "fiction",
+            "science fiction",
+            "science",
+            "action science",
+            "fantasy",
+            "action fantasy",
+            "comedy",
+            "historical",
+            "action historical",
+            "warfare"
+        ],
+        "keywords": [
+            "digital",
+            "distribution",
+            "digital distribution",
+            "wii",
+            "virtual console",
+            "virtual",
+            "wii virtual",
+            "console",
+            "retroachievements",
+            "retroachievements wii"
+        ],
+        "involved_companies": [
+            "capcom",
+            "sega",
+            "team",
+            "sonic",
+            "sonic team",
+            "snk",
+            "nintendo",
+            "sega sonic",
+            "creates",
+            "inti"
+        ]
+    },
+    "2": {
+        "name": [
+            "legend",
+            "legend zelda",
+            "zelda",
+            "final",
+            "fantasy",
+            "final fantasy",
+            "cloud",
+            "dark cloud",
+            "dark",
+            "twilight"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "sandbox",
+            "science fiction",
+            "science",
+            "fiction",
+            "world",
+            "open world",
+            "open"
+        ],
+        "keywords": [
+            "motion",
+            "zelda",
+            "zelda motion",
+            "control",
+            "motion control",
+            "time",
+            "protagonist",
+            "nintendo",
+            "game",
+            "combat"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "ead",
+            "nintendo ead",
+            "development",
+            "group",
+            "software",
+            "ead software",
+            "software development",
+            "development group",
+            "square"
+        ]
+    },
+    "5": {
+        "name": [
+            "animal",
+            "crossing",
+            "animal crossing",
+            "legend zelda",
+            "zelda",
+            "legend",
+            "halo",
+            "fantasy",
+            "final fantasy",
+            "final"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "science fiction",
+            "fiction",
+            "science",
+            "sandbox",
+            "comedy",
+            "kids",
+            "action science"
+        ],
+        "keywords": [
+            "motion",
+            "advergame",
+            "game",
+            "zelda motion",
+            "zelda",
+            "nintendo",
+            "motion control",
+            "control",
+            "player",
+            "retroachievements"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "ead",
+            "nintendo ead",
+            "ead nintendo",
+            "development",
+            "nintendo nintendo",
+            "group",
+            "software",
+            "development group",
+            "ead software"
+        ]
+    }
+}
