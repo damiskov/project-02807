@@ -1,7 +1,6 @@
 """
 Applying general clustering algorithms to PCA-reduced embedding representations.
 """
-import json
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -22,7 +21,7 @@ from models.cluster import DBSCANClusterModel
 from models.cluster import HierarchicalClusterModel
 
 # utils
-from utils.load import load_embeddings
+from utils.load import load_embeddings_dataset
 from utils.tf_idf import tfidf_cluster_summary
 from utils.tf_idf import tfidf_cluter_per_column
 
@@ -244,7 +243,7 @@ def cluster_analysis(
     )
     tfidf_cluter_per_column(
         clustered_df,
-        text_columns=["name", "themes", "keywords", "involved_companies"],
+        text_columns=["name", "themes", "keywords", "involved_companies", "first_release_year"],
         save_path=f"results/embedding_general/{model_name}_{clustering_model.name}_tfidf_per_column.json",
         k=10,
         ngram_range=(1, 2),
@@ -258,7 +257,7 @@ def cluster_analysis(
 if __name__ == "__main__":
 
     model_names = ["ast", "clap", "wavlm"]
-    embeddings_df = load_embeddings("data/videogame_embeddings/embedding_dataset.parquet")
+    embeddings_df = load_embeddings_dataset("data/videogame_embeddings/embedding_dataset.parquet")
 
     for model_name in model_names:
 

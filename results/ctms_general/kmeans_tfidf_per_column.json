@@ -1,0 +1,302 @@
+{
+    "5": {
+        "name": [
+            "legend",
+            "legend zelda",
+            "zelda",
+            "final",
+            "fantasy",
+            "final fantasy",
+            "princess",
+            "zelda twilight",
+            "twilight princess",
+            "twilight"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "fiction",
+            "science",
+            "science fiction",
+            "action science",
+            "comedy",
+            "sandbox",
+            "fantasy science"
+        ],
+        "keywords": [
+            "motion",
+            "zelda motion",
+            "zelda",
+            "motion control",
+            "control",
+            "game",
+            "protagonist",
+            "time",
+            "character",
+            "console"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "ead",
+            "nintendo ead",
+            "development",
+            "square",
+            "group",
+            "software",
+            "capcom",
+            "software development",
+            "development group"
+        ]
+    },
+    "3": {
+        "name": [
+            "mega",
+            "mega man",
+            "man",
+            "sonic",
+            "super",
+            "hearts",
+            "kingdom",
+            "kingdom hearts",
+            "bros",
+            "smash"
+        ],
+        "themes": [
+            "fiction",
+            "science fiction",
+            "science",
+            "action science",
+            "fantasy",
+            "action fantasy",
+            "comedy",
+            "horror",
+            "action comedy",
+            "kids"
+        ],
+        "keywords": [
+            "cast",
+            "boss",
+            "protagonist",
+            "digital",
+            "character",
+            "distribution",
+            "digital distribution",
+            "wii",
+            "game",
+            "nintendo"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "capcom",
+            "creates",
+            "inti creates",
+            "inti",
+            "creates capcom",
+            "konami",
+            "sega",
+            "team",
+            "sonic"
+        ]
+    },
+    "0": {
+        "name": [
+            "man",
+            "mega man",
+            "mega",
+            "sonic",
+            "fantasy",
+            "final",
+            "final fantasy",
+            "super",
+            "bros",
+            "smash"
+        ],
+        "themes": [
+            "fantasy",
+            "science fiction",
+            "science",
+            "fiction",
+            "action science",
+            "action fantasy",
+            "comedy",
+            "fantasy science",
+            "kids",
+            "drama"
+        ],
+        "keywords": [
+            "digital",
+            "distribution",
+            "digital distribution",
+            "protagonist",
+            "boss",
+            "character",
+            "game",
+            "motion",
+            "time",
+            "player"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "capcom",
+            "square",
+            "creates",
+            "inti creates",
+            "inti",
+            "sega",
+            "team",
+            "sonic",
+            "sonic team"
+        ]
+    },
+    "2": {
+        "name": [
+            "zx advent",
+            "mega man",
+            "advent",
+            "zx",
+            "man zx",
+            "mega",
+            "man",
+            "castlevania",
+            "gx",
+            "gear"
+        ],
+        "themes": [
+            "science fiction",
+            "science",
+            "fiction",
+            "action science",
+            "fantasy",
+            "horror",
+            "fantasy horror",
+            "action fantasy",
+            "kids",
+            "fiction kids"
+        ],
+        "keywords": [
+            "distribution",
+            "digital distribution",
+            "digital",
+            "post",
+            "character",
+            "game",
+            "wii",
+            "console",
+            "bundles",
+            "outside"
+        ],
+        "involved_companies": [
+            "capcom",
+            "konami",
+            "inti",
+            "capcom inti",
+            "creates",
+            "inti creates",
+            "nintendo",
+            "sega",
+            "snk",
+            "d4 enterprise"
+        ]
+    },
+    "4": {
+        "name": [
+            "sonic",
+            "adventure",
+            "sonic adventure",
+            "final",
+            "final fantasy",
+            "fantasy",
+            "rush",
+            "sonic rush",
+            "kingdom",
+            "hearts"
+        ],
+        "themes": [
+            "action",
+            "fantasy",
+            "action fantasy",
+            "fiction",
+            "science fiction",
+            "science",
+            "action science",
+            "fantasy science",
+            "comedy",
+            "fiction comedy"
+        ],
+        "keywords": [
+            "digital",
+            "distribution",
+            "digital distribution",
+            "cast",
+            "character",
+            "boss",
+            "protagonist",
+            "time",
+            "combat",
+            "wii"
+        ],
+        "involved_companies": [
+            "sega",
+            "nintendo",
+            "sonic",
+            "team",
+            "sonic team",
+            "sega sonic",
+            "capcom",
+            "entertainment",
+            "systems",
+            "intelligent systems"
+        ]
+    },
+    "1": {
+        "name": [
+            "man",
+            "mega",
+            "mega man",
+            "zx",
+            "man zx",
+            "legend",
+            "zelda",
+            "legend zelda",
+            "thousand",
+            "mario"
+        ],
+        "themes": [
+            "science fiction",
+            "science",
+            "fiction",
+            "action science",
+            "fantasy",
+            "action fantasy",
+            "fiction comedy",
+            "fantasy science",
+            "comedy",
+            "world"
+        ],
+        "keywords": [
+            "boss",
+            "cast",
+            "protagonist",
+            "motion",
+            "fan",
+            "zelda",
+            "zelda motion",
+            "portuguese",
+            "fan translation",
+            "translation portuguese"
+        ],
+        "involved_companies": [
+            "nintendo",
+            "inti",
+            "creates",
+            "creates capcom",
+            "inti creates",
+            "capcom",
+            "konami",
+            "systems",
+            "intelligent",
+            "nintendo intelligent"
+        ]
+    }
+}

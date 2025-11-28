@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import pandas as pd
+from loguru import logger
 
 from typing import Dict, Union, List, Optional
 
@@ -51,6 +52,11 @@ def tfidf_cluster_summary(
             results[cluster] = []
             continue
 
+        if len(texts) < 2:
+            results[cluster] = []
+            continue
+
+
         # Build TF-IDF model for this cluster
         vectorizer = TfidfVectorizer(
             lowercase=True,
@@ -60,7 +66,12 @@ def tfidf_cluster_summary(
             max_df=max_df,
         )
 
-        tfidf_matrix = vectorizer.fit_transform(texts)
+        try:
+            tfidf_matrix = vectorizer.fit_transform(texts)
+        except ValueError:
+            logger.error(f"TF-IDF fitting failed for cluster {cluster} with {len(texts)} documents.")
+            results[cluster] = []
+            continue
 
         # Aggregate word importance across docs
         scores = np.asarray(tfidf_matrix.sum(axis=0)).ravel()
@@ -157,7 +168,12 @@ def tfidf_cluter_per_column(
                 min_df=min_df,
                 max_df=max_df,
             )
-            tfidf_matrix = vectorizer.fit_transform(texts)
+            try:
+                tfidf_matrix = vectorizer.fit_transform(texts)
+            except ValueError:
+                logger.error(f"TF-IDF fitting failed for cluster {cluster} with {len(texts)} documents.")
+                results[cluster][col] = []
+                continue
 
             # Sum TF-IDF values across all docs in the cluster
             word_scores = np.asarray(tfidf_matrix.sum(axis=0)).ravel()

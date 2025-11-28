@@ -5,8 +5,10 @@ from tqdm import tqdm
 from loguru import logger
 import re
 
-# -- updated loading functions ---
+# ======= updated loading functions =======
 
+
+# --- metadata handling ---
 def clean_text(s: str) -> str:
     """Clean text (metadata)"""
     s = s.lower()
@@ -21,11 +23,8 @@ def join_list(x):
         return " ".join(map(str, x))
     return "" if pd.isna(x) else str(x)
 
-def load_embeddings(path: str) -> pd.DataFrame:
-    """Load embeddings CSV and preprocess certain columns."""
-    df = pd.read_parquet(path)
-
-    # add metadata column
+def clean_metadata_column(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean a specific metadata column in the DataFrame."""
     df["metadata"] = (
         df["name"].apply(join_list) + " " +
         df["themes"].apply(join_list) + " " +
@@ -34,7 +33,20 @@ def load_embeddings(path: str) -> pd.DataFrame:
     )
     df["metadata"] = df["metadata"].apply(clean_text)
     return df
+
+def load_embeddings_dataset(path: str) -> pd.DataFrame:
+    """Load embeddings CSV and preprocess certain columns."""
+    df = pd.read_parquet(path)
+    df = clean_metadata_column(df)
+    return df
         
+
+def load_ctms_dataset(path: str) -> pd.DataFrame:
+    """Load CTM-based dataset"""
+    df = pd.read_parquet(path)
+    df["ctm"] = df["ctm"].apply(lambda x: np.stack(x, axis=0).astype(np.int32)) # need to convert list of arrays to single array
+    df = clean_metadata_column(df)
+    return df
 
 # --- old shit ---
 
