@@ -1,122 +1,122 @@
 {
     "2": [
         "nintendo",
-        "zelda",
         "action",
         "fantasy",
-        "motion",
+        "square",
         "action fantasy",
-        "development",
-        "square",
-        "software",
-        "legend"
-    ],
-    "4": [
-        "nintendo",
-        "action",
-        "fantasy",
-        "character",
-        "sonic",
-        "game",
-        "square",
-        "protagonist",
-        "boss",
-        "time"
-    ],
-    "8": [
-        "nintendo",
-        "fantasy",
         "namco",
-        "zelda",
-        "sonic",
-        "action fantasy",
-        "protagonist",
-        "boss",
+        "konami",
         "motion",
-        "development"
-    ],
-    "1": [
-        "nintendo",
-        "action",
-        "game",
-        "boss",
-        "character",
-        "time",
-        "protagonist",
-        "fantasy",
         "development",
-        "super"
+        "zelda"
     ],
     "7": [
         "nintendo",
         "action",
-        "sonic",
         "fantasy",
+        "sonic",
+        "character",
+        "game",
         "protagonist",
         "boss",
-        "square",
-        "development",
-        "game",
-        "action fantasy"
+        "final fantasy",
+        "final"
     ],
-    "6": [
+    "1": [
         "nintendo",
         "action",
-        "square",
+        "namco",
         "fantasy",
-        "motion",
         "zelda",
-        "time",
-        "development",
-        "protagonist",
-        "game"
-    ],
-    "5": [
-        "nintendo",
-        "zelda",
-        "motion",
-        "fantasy",
-        "development",
+        "sonic",
         "action fantasy",
-        "nintendo ead",
-        "ead",
-        "legend",
-        "group"
+        "boss",
+        "tales",
+        "protagonist"
+    ],
+    "4": [
+        "nintendo",
+        "square",
+        "zelda",
+        "motion",
+        "fantasy",
+        "action",
+        "development",
+        "time",
+        "protagonist",
+        "save"
+    ],
+    "8": [
+        "nintendo",
+        "super",
+        "game",
+        "boss",
+        "protagonist",
+        "character",
+        "time",
+        "square",
+        "wii",
+        "fantasy"
+    ],
+    "9": [
+        "action",
+        "nintendo",
+        "character",
+        "fantasy",
+        "game",
+        "sonic",
+        "protagonist",
+        "boss",
+        "action fantasy",
+        "capcom"
     ],
     "3": [
         "nintendo",
         "sonic",
         "boss",
         "protagonist",
-        "character",
-        "combat",
+        "fantasy",
         "game",
-        "time",
         "sega",
-        "super"
+        "action fantasy",
+        "digital",
+        "character"
     ],
-    "9": [
+    "6": [
         "nintendo",
         "action",
-        "zelda",
+        "square",
+        "sonic",
         "fantasy",
         "motion",
         "development",
-        "square",
-        "snk",
+        "zelda",
+        "protagonist",
+        "character"
+    ],
+    "5": [
+        "nintendo",
+        "sonic",
+        "boss",
+        "protagonist",
         "character",
-        "console"
+        "combat",
+        "time",
+        "digital",
+        "sega",
+        "game"
     ],
     "0": [
         "nintendo",
         "action",
         "game",
-        "fantasy",
         "zelda",
-        "player",
+        "time",
+        "fantasy",
+        "boss",
         "nintendo ead",
         "ead",
-        "video",
-        "reader"
+        "character"
     ]
 }

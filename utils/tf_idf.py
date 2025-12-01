@@ -56,7 +56,6 @@ def tfidf_cluster_summary(
             results[cluster] = []
             continue
 
-
         # Build TF-IDF model for this cluster
         vectorizer = TfidfVectorizer(
             lowercase=True,
