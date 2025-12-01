@@ -6,6 +6,7 @@ import pandas as pd
 from dataclasses import dataclass
 from typing import List, Optional, Literal
 from abc import ABC, abstractmethod
+from tqdm import tqdm
 
 
 # --- Cluster Model Base Class ---
@@ -174,29 +175,32 @@ class HierarchicalClusterModel(ClusterModel):
         # Start with each point as its own cluster (slide 27)
         clusters = [[i] for i in range(n_samples)]
 
+        total_merges = n_samples - self.n_clusters
         # Agglomerative merging (slide 27)
-        while len(clusters) > self.n_clusters:
+        with tqdm(total=total_merges, desc="Agglomerative Clustering") as pbar:
+            while len(clusters) > self.n_clusters:
 
-            min_dist = float("inf")
-            merge_pair = None
+                min_dist = float("inf")
+                merge_pair = None
 
-            # Compute distance betwenn all cluster pairs
-            for i in range(len(clusters)):
-                for j in range(i + 1, len(clusters)):
+                # Compute distance betwenn all cluster pairs
+                for i in range(len(clusters)):
+                    for j in range(i + 1, len(clusters)):
 
-                    dist = self._cluster_distance(X, clusters[i], clusters[j])
-                    if dist < min_dist:
-                        min_dist = dist
-                        merge_pair = (i, j)
+                        dist = self._cluster_distance(X, clusters[i], clusters[j])
+                        if dist < min_dist:
+                            min_dist = dist
+                            merge_pair = (i, j)
 
-            # Merge the two closest clusters
-            i, j = merge_pair
-            new_cluster = clusters[i] + clusters[j]
+                # Merge the two closest clusters
+                i, j = merge_pair
+                new_cluster = clusters[i] + clusters[j]
 
-            # Remove old clusters and append merged cluster
-            clusters.pop(max(i, j))
-            clusters.pop(min(i, j))
-            clusters.append(new_cluster)
+                # Remove old clusters and append merged cluster
+                clusters.pop(max(i, j))
+                clusters.pop(min(i, j))
+                clusters.append(new_cluster)
+                pbar.update(1)
 
         return clusters
 
@@ -219,49 +223,52 @@ class HierarchicalClusterModel(ClusterModel):
             dists = np.linalg.norm(pts[:, None] - pts[None, :], axis=2)
             return np.max(dists)
 
-        while len(clusters) < self.n_clusters:
-            # Pick cluster with largest diameter
-            diameters = [cluster_diameter(c) for c in clusters]
-            split_idx = int(np.argmax(diameters))
-            cluster_to_split = clusters.pop(split_idx)
+        total_splits = self.n_clusters - 1
+        with tqdm(total=total_splits, desc="Divisive Clustering") as pbar:
+            while len(clusters) < self.n_clusters:
+                # Pick cluster with largest diameter
+                diameters = [cluster_diameter(c) for c in clusters]
+                split_idx = int(np.argmax(diameters))
+                cluster_to_split = clusters.pop(split_idx)
 
-            if len(cluster_to_split) <= 1:
-                # Can't split further
-                clusters.append(cluster_to_split)
-                continue
+                if len(cluster_to_split) <= 1:
+                    # Can't split further
+                    clusters.append(cluster_to_split)
+                    continue
 
-            # Perform a 2-means (k=2) on this cluster for splitting
-            pts = X[cluster_to_split]
+                # Perform a 2-means (k=2) on this cluster for splitting
+                pts = X[cluster_to_split]
 
-            # Initialize two farthest points as centroids
-            dists = np.linalg.norm(pts[:, None] - pts[None, :], axis=2)
-            a, b = np.unravel_index(np.argmax(dists), dists.shape)
-            c1, c2 = pts[a], pts[b]
+                # Initialize two farthest points as centroids
+                dists = np.linalg.norm(pts[:, None] - pts[None, :], axis=2)
+                a, b = np.unravel_index(np.argmax(dists), dists.shape)
+                c1, c2 = pts[a], pts[b]
 
-            old_assignments = None
-            for _ in range(10):
-                # Assign points
-                d1 = np.linalg.norm(pts - c1, axis=1)
-                d2 = np.linalg.norm(pts - c2, axis=1)
-                assignments = (d1 > d2).astype(int)
+                old_assignments = None
+                for _ in range(10):
+                    # Assign points
+                    d1 = np.linalg.norm(pts - c1, axis=1)
+                    d2 = np.linalg.norm(pts - c2, axis=1)
+                    assignments = (d1 > d2).astype(int)
 
-                # Check convergence
-                if old_assignments is not None and np.all(assignments == old_assignments):
-                    break
-                old_assignments = assignments.copy()
+                    # Check convergence
+                    if old_assignments is not None and np.all(assignments == old_assignments):
+                        break
+                    old_assignments = assignments.copy()
 
-                # Update centroids
-                if np.any(assignments == 0):
-                    c1 = pts[assignments == 0].mean(axis=0)
-                if np.any(assignments == 1):
-                    c2 = pts[assignments == 1].mean(axis=0)
+                    # Update centroids
+                    if np.any(assignments == 0):
+                        c1 = pts[assignments == 0].mean(axis=0)
+                    if np.any(assignments == 1):
+                        c2 = pts[assignments == 1].mean(axis=0)
 
-            # Create two new clusters
-            cluster_A = [cluster_to_split[i] for i in range(len(cluster_to_split)) if assignments[i] == 0]
-            cluster_B = [cluster_to_split[i] for i in range(len(cluster_to_split)) if assignments[i] == 1]
+                # Create two new clusters
+                cluster_A = [cluster_to_split[i] for i in range(len(cluster_to_split)) if assignments[i] == 0]
+                cluster_B = [cluster_to_split[i] for i in range(len(cluster_to_split)) if assignments[i] == 1]
 
-            clusters.append(cluster_A)
-            clusters.append(cluster_B)
+                clusters.append(cluster_A)
+                clusters.append(cluster_B)
+                pbar.update(1)
 
         return clusters
 
