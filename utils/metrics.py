@@ -1,13 +1,18 @@
 import ast
 import json
+import textwrap
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from numpy.typing import NDArray
+from loguru import logger
+
 from typing import Dict, List, Any
 from collections import Counter
+
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def kl_divergence(P: np.ndarray, Q: np.ndarray, eps: float = 1e-10) -> float:
@@ -217,14 +222,27 @@ def column_wise_summary(
     for c in clusters:
         # Convert cluster label to JSON-serializable type
         c_key = str(int(c)) if isinstance(c, (np.integer, np.floating)) else str(c)
-        summary[c_key] = {}
+        subset = df[df["cluster_label"] == c]
+        cluster_num = len(subset)
+        
+        summary[c_key] = {
+            col: {} for col in columns
+        }
+        summary[c_key]["cluster_size"] = cluster_num
         
         for col in columns:
+            logger.debug(f"Processing cluster {c_key}, column '{col}'…")
             subset = df[df["cluster_label"] == c]
 
-            if subset.empty:
+            # Ensure the nested dict for this column exists
+            if col not in summary[c_key]:
                 summary[c_key][col] = {}
+
+            if subset.empty:
+                logger.warning(f"Cluster {c_key} has no entries for column '{col}'.")
+                # Keep as empty dict for empty subsets
                 continue
+            
 
             # Flatten list values OR handle scalar values
             flat_values = []
@@ -250,9 +268,117 @@ def column_wise_summary(
             counts = {str(k): int(v) for k, v in counts.items() if isinstance(v, (int, np.integer))}
             # Sort by count (descending)
             counts = dict(sorted(counts.items(), key=lambda x: -x[1]))
-            summary[c_key][col] = counts
+            # Store counts under a dedicated key to avoid overwriting
+            summary[c_key][col]["counts"] = counts
 
     with open(save_path, "w") as f:
         json.dump(summary, f, indent=4)
 
     return None
+
+
+def plot_merged_attribute_heatmap(
+    df,
+    labels,
+    save_path,
+    top_n=5,
+):
+    """
+    Merges 'themes', 'keywords', 'involved_companies', and 'game' into a single 
+    analysis pool and plots distinctive terms per cluster.
+    """
+    local_df = df.copy()
+    local_df['cluster'] = labels
+    
+    # Define the columns we want to merge
+    # Ensure these exist in your dataframe; remove any that don't
+    target_cols = ["themes", "keywords", "involved_companies", "game"]
+    valid_cols = [c for c in target_cols if c in local_df.columns]
+    
+    # --- STEP 1: NORMALIZE EVERYTHING TO LISTS ---
+    for col in valid_cols:
+        # Fill NaNs with empty list representation
+        local_df[col] = local_df[col].fillna("[]")
+        
+        def standardize_to_list(val):
+            try:
+                # Case A: It's already a list -> Keep it
+                if isinstance(val, list):
+                    return val
+                
+                # Case B: It's a string
+                if isinstance(val, str):
+                    val = val.strip()
+                    # Case B1: Stringified list "['Action', 'FPS']" -> Convert to list
+                    if val.startswith('[') and val.endswith(']'):
+                        return ast.literal_eval(val)
+                    # Case B2: Regular string "Halo 3" -> Wrap in list ['Halo 3']
+                    # Check if empty string
+                    if val == "" or val == "[]":
+                        return []
+                    return [val]
+                
+                # Case C: Other (numbers, etc) -> Wrap in list
+                return [str(val)]
+            except:
+                return []
+
+        local_df[col] = local_df[col].apply(standardize_to_list)
+
+    # --- STEP 2: MERGE COLUMNS ---
+    # Now that all columns are actual lists, we can sum them row-wise
+    # This concatenates ['Halo'] + ['Action'] -> ['Halo', 'Action']
+    local_df['all_tags'] = local_df[valid_cols].sum(axis=1)
+
+    # --- STEP 3: EXPLODE ---
+    exploded_df = local_df.explode('all_tags')
+    
+    # Clean up: remove short garbage strings or numbers that might have slipped in
+    exploded_df['all_tags'] = exploded_df['all_tags'].astype(str)
+    exploded_df = exploded_df[exploded_df['all_tags'].str.len() > 2]
+
+    # --- STEP 4: CALCULATE METRICS (LIFT) ---
+    global_counts = exploded_df['all_tags'].value_counts(normalize=True)
+    unique_clusters = sorted(local_df['cluster'].unique())
+    
+    lift_grid = np.zeros((len(unique_clusters), top_n))
+    word_grid = np.full((len(unique_clusters), top_n), "", dtype=object)
+    
+    for i, c in enumerate(unique_clusters):
+        c_counts = exploded_df[exploded_df['cluster'] == c]['all_tags'].value_counts(normalize=True)
+        
+        # Calculate Lift
+        lift = c_counts / global_counts.reindex(c_counts.index).fillna(1)
+        
+        top_k = lift.sort_values(ascending=False).head(top_n)
+        
+        for rank, (word, score) in enumerate(top_k.items()):
+            if rank < top_n:
+                lift_grid[i, rank] = score
+                # Wrap text for heatmap
+                clean_word = textwrap.fill(str(word), width=12) 
+                word_grid[i, rank] = clean_word
+
+    # --- STEP 5: PLOT ---
+    plt.figure(figsize=(14, len(unique_clusters) * 1.4))
+    
+    ax = sns.heatmap(
+        lift_grid, 
+        annot=word_grid, 
+        fmt="", 
+        cmap="Blues", 
+        linewidths=1.0,
+        linecolor='white',
+        yticklabels=[f"Cluster {c+1}" for c in unique_clusters],
+        xticklabels=[f"Rank {i+1}" for i in range(top_n)],
+        annot_kws={"size": 9, "weight": "bold"},
+        cbar_kws={"orientation": "horizontal", "pad": 0.05, "aspect": 40, "label": "Lift Score (Distinctiveness)"}
+    )
+    
+    ax.set_title("Most Distinctive Attributes (Themes, Keywords, Games, Companies) by Cluster", fontsize=16, pad=20)
+    plt.yticks(rotation=0)
+    ax.xaxis.tick_top()
+    plt.savefig(save_path, bbox_inches='tight', dpi=300)
+    
+    plt.tight_layout()
+    plt.show()

@@ -1,63 +1,74 @@
 {
-    "4": [
-        "nintendo",
-        "zelda",
-        "action",
-        "fantasy",
-        "motion",
-        "development",
-        "nintendo ead",
-        "ead",
-        "action fantasy",
-        "group"
-    ],
-    "5": [
-        "sonic",
-        "action",
-        "nintendo",
-        "boss",
-        "protagonist",
-        "sega",
-        "team",
-        "sonic team",
-        "snk",
-        "wii"
-    ],
-    "1": [
-        "nintendo",
-        "action",
-        "zelda",
-        "fantasy",
-        "time",
-        "protagonist",
-        "motion",
-        "development",
-        "action fantasy",
-        "character"
-    ],
     "0": [
         "nintendo",
-        "square",
+        "zelda",
+        "action",
         "fantasy",
         "motion",
-        "action",
         "development",
-        "time",
-        "zelda",
-        "game",
-        "character"
+        "action fantasy",
+        "ead",
+        "nintendo ead",
+        "group"
     ],
     "2": [
         "nintendo",
-        "zelda",
+        "action",
+        "sonic",
         "fantasy",
-        "motion",
-        "development",
-        "action fantasy",
-        "nintendo ead",
-        "legend",
-        "legend zelda",
-        "ead"
+        "protagonist",
+        "character",
+        "square",
+        "game",
+        "boss",
+        "sega"
     ],
-    "3": []
+    "1": [
+        "nintendo",
+        "sonic",
+        "character",
+        "boss",
+        "fantasy",
+        "kingdom",
+        "kingdom hearts",
+        "hearts",
+        "sega",
+        "team"
+    ],
+    "5": [
+        "nintendo",
+        "action",
+        "boss",
+        "super",
+        "game",
+        "character",
+        "fantasy",
+        "protagonist",
+        "science fiction",
+        "science"
+    ],
+    "3": [
+        "sonic",
+        "action",
+        "character",
+        "fantasy",
+        "protagonist",
+        "nintendo",
+        "sega",
+        "team",
+        "square",
+        "sonic team"
+    ],
+    "4": [
+        "sonic",
+        "nintendo",
+        "action",
+        "boss",
+        "protagonist",
+        "fantasy",
+        "square",
+        "character",
+        "wii",
+        "game"
+    ]
 }

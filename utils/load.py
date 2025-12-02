@@ -52,7 +52,6 @@ def load_ctms_dataset(path: str) -> pd.DataFrame:
 
 def load_metadata(csv_path: str | Path) -> pd.DataFrame:
     """Load movie metadata CSV and keep IMDb rating only."""
-    import ast
 
     df = pd.read_csv(csv_path)
     df.columns = [c.strip().lower() for c in df.columns]

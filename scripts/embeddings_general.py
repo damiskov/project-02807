@@ -3,9 +3,11 @@ Clustering pipeline for PCA-reduced neural embeddings
 (AST, CLAP, WavLM)
 """
 import json
+import argparse
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import os
 from loguru import logger
 
 from typing import List, Optional
@@ -25,6 +27,7 @@ from utils.load import load_embeddings_dataset
 from utils.tf_idf import tfidf_cluster_summary
 from utils.metrics import column_wise_summary
 # from utils.metrics import davies_bouldin_score, silhouette_score
+from utils.mahalanobis import mahalanobis_mask
 
 
 # -------- plot settings ----------
@@ -78,7 +81,8 @@ def preprocess_embeddings(
     df: pd.DataFrame,
     model_name: str,
     remove_outliers: bool = True,
-    iqr_multiplier: float = 4,
+    n_components: Optional[int] = None,
+    alpha: float = 0.01,
 ):
     """
     Convert embeddings -> standardize -> PCA until ≥90% variance -> optional outlier filtering.
@@ -100,6 +104,10 @@ def preprocess_embeddings(
     cum = np.cumsum(pca_full.explained_variance_ratio_)
     k = np.argmax(cum >= 0.90) + 1
     logger.info(f"{model_name}: PCA -> {k} dims (≥90% variance)")
+    
+    if n_components is not None:
+        k = min(k, n_components)
+        logger.info(f"{model_name}: PCA limited to {k} dims (n_components={n_components})")
 
     pca = PCA(n_components=k)
     X_pca = pca.fit_transform(X_scaled)
@@ -108,14 +116,8 @@ def preprocess_embeddings(
 
     # Optional outlier removal in PCA space
     if remove_outliers:
-        mask = np.ones(len(X_pca), dtype=bool)
-        for j in range(X_pca.shape[1]):
-            q1, q3 = np.percentile(X_pca[:, j], [25, 75])
-            iqr = q3 - q1
-            lb, ub = q1 - iqr_multiplier * iqr, q3 + iqr_multiplier * iqr
-            mask &= (X_pca[:, j] >= lb) & (X_pca[:, j] <= ub)
-
-        logger.info(f"Removed {(~mask).sum()} outliers from {model_name} embeddings.")
+        mask, d2, threshold = mahalanobis_mask(X_pca, alpha=alpha)
+        logger.info(f"Removed {(~mask).sum()} outliers (Mahalanobis, χ² threshold={threshold:.2f})")
         return df[mask].reset_index(drop=True), X_pca[mask]
 
     return df.reset_index(drop=True), X_pca
@@ -127,8 +129,7 @@ def tune_embedding_clusters(
     df: pd.DataFrame,
     model_name: str,
     k_list: Optional[List[int]] = None,
-    eps_list: Optional[List[float]] = None,
-    n_clusters_list: Optional[List[int]] = None,
+    n_components: Optional[int] = None,
     save_path: str = "results/embedding_general",
 ):
     """
@@ -148,17 +149,13 @@ def tune_embedding_clusters(
         davies_bouldin_scores: Dict of Davies-Bouldin scores per model and param
     """
     logger.info(f"Preprocessing embeddings for tuning ({model_name})…")
-    df_proc, X = preprocess_embeddings(df, model_name)
+    df_proc, X = preprocess_embeddings(df, model_name, n_components=n_components)
 
     silhouette_scores = {
         "kmeans": {},
-        "dbscan": {},
-        "hierarchical": {}
     }
     davies_bouldin_scores = {
         "kmeans": {},
-        "dbscan": {},
-        "hierarchical": {}
     }
 
     # ---- KMeans ----
@@ -170,28 +167,9 @@ def tune_embedding_clusters(
             silhouette_scores["kmeans"][k] = silhouette_score(X, labels)
             davies_bouldin_scores["kmeans"][k] = davies_bouldin_score(X, labels)
 
-    # ---- DBSCAN ----
-    if eps_list:
-        for eps in tqdm(eps_list, desc=f"[{model_name}] DBSCAN tuning"):
-            model = DBSCANClusterModel(eps=eps, min_samples=5)
-            model.fit(X)
-            labels = model.labels_
 
-        if len(set(labels)) > 1 and -1 not in labels:
-            silhouette_scores["dbscan"][eps] = silhouette_score(X, labels)
-            davies_bouldin_scores["dbscan"][eps] = davies_bouldin_score(X, labels)
-        else:
-            score = -1  # invalid
-        silhouette_scores["dbscan"][eps] = score
-        davies_bouldin_scores["dbscan"][eps] = None  # invalid
-
-    # ---- Hierarchical ----
-    # NOTE: commented out for speed; uncomment to enable
-    # for n in tqdm(n_clusters_list, desc=f"[{model_name}] Hierarchical tuning"):
-    #     model = HierarchicalClusterModel(n_clusters=n)
-    #     labels = model.fit_predict(X)
-    #     results["hierarchical"][n] = silhouette_score(X, labels)
-
+    # Ensure save directory exists
+    os.makedirs(f"{save_path}/json", exist_ok=True)
     score_path = f"{save_path}/json/{model_name}_tuning_scores.json"
     with open(score_path, "w") as f:
         json.dump({
@@ -209,18 +187,20 @@ def plot_embedding_clusters(
     df: pd.DataFrame,
     model_name: str,
     model: ClusterModel,
+    n_components: Optional[int] = None,
     dim: int = 2,
     remove_outliers: bool = True,
 ):
     """
     Preprocess -> cluster -> plot (2D or 3D PCA).
     """
-    save_dir = "results/embedding_general/plots"
+    save_dir = "results/embedding_general/figs"
+    os.makedirs(save_dir, exist_ok=True)
 
     if dim not in (2, 3):
         raise ValueError("dim must be 2 or 3")
 
-    df_proc, X = preprocess_embeddings(df, model_name, remove_outliers)
+    df_proc, X = preprocess_embeddings(df, model_name, remove_outliers, n_components=n_components)
     labels = model.fit_predict(X)
     df_proc["cluster_label"] = labels
 
@@ -232,6 +212,7 @@ def plot_embedding_clusters(
         plt.xlabel("PC1")
         plt.ylabel("PC2")
         plt.tight_layout()
+        plt.colorbar(s, label="Cluster Label")
         save_path = f"{save_dir}/{model_name}_2D_clusters.png"
         plt.savefig(save_path, dpi=300)
         return df_proc
@@ -245,17 +226,20 @@ def plot_embedding_clusters(
     ax.set_ylabel("PC2")
     ax.set_zlabel("PC3")
     plt.tight_layout()
+    plt.colorbar(s, ax=ax, label="Cluster Label")
     save_path = f"{save_dir}/{model_name}_3D_clusters.png"
     plt.savefig(save_path, dpi=300)
+    
     return df_proc
 
 
 # -------- TF-IDF metadata evaluation function ----------
 
-def evaluate_embedding_metadata(
+def evaluate_metadata(
     df: pd.DataFrame,
     model_name: str,
     model: ClusterModel,
+    n_components: Optional[int] = None,
     save_dir: str = "results/embedding_general/json/",
 ):
     """
@@ -264,10 +248,11 @@ def evaluate_embedding_metadata(
       - {model_name}_{clusterer}_tfidf_summary.json
       - {model_name}_{clusterer}_tfidf_columns.json
     """
-    df_proc, X = preprocess_embeddings(df, model_name)
+    df_proc, X = preprocess_embeddings(df, model_name, n_components=n_components)
     df_proc["cluster_label"] = model.fit_predict(X)
 
-    global_path = f"{save_dir}/{model_name}_{model.name}_tfidf_global.json"
+    os.makedirs(save_dir, exist_ok=True)
+    global_path = f"{save_dir}/{model_name}_tfidf_global.json"
 
     tfidf_cluster_summary(
         df_proc,
@@ -278,7 +263,7 @@ def evaluate_embedding_metadata(
         max_df=0.8,
     )
 
-    column_path = f"{save_dir}/{model_name}_{model.name}_column_summary.json"
+    column_path = f"{save_dir}/{model_name}_column_summary.json"
 
     column_wise_summary(
         df_proc,
@@ -289,30 +274,95 @@ def evaluate_embedding_metadata(
 
     return df_proc
 
+def evaluate_columns(
+    df: pd.DataFrame,
+    model_name: str,
+    model: ClusterModel,
+    n_components: Optional[int] = None,
+    save_dir: str = "results/embedding_general/json/",
+):
+    """
+    Preprocess -> cluster -> column-wise summary.
+    Saves:
+      - {model_name}_{clusterer}_column_summary.json
+    """
+    df_proc, X = preprocess_embeddings(df, model_name, n_components=n_components)
+    df_proc["cluster_label"] = model.fit_predict(X)
+
+    os.makedirs(save_dir, exist_ok=True)
+    column_path = f"{save_dir}/{model_name}_column_summary.json"
+
+    column_wise_summary(
+        df_proc,
+        columns=["name", "themes", "keywords", "involved_companies", "first_release_year"],
+        save_path=column_path
+    )
+
+
+    return df_proc
+
+def evaluate_tfidf(
+    df: pd.DataFrame,
+    model_name: str,
+    model: ClusterModel,
+    n_components: Optional[int] = None,
+    save_dir: str = "results/embedding_general/json/",
+):
+    """
+    Preprocess -> cluster -> TF-IDF global.
+    Saves:
+      - {model_name}_{clusterer}_tfidf_summary.json
+    """
+    df_proc, X = preprocess_embeddings(df, model_name, n_components=n_components)
+    df_proc["cluster_label"] = model.fit_predict(X)
+    
+    # log the metadata and cluster label head
+    logger.debug(f"Clustered DataFrame head:\n{df_proc[['metadata', 'cluster_label']].head()}")
+    
+    os.makedirs(save_dir, exist_ok=True)
+    global_path = f"{save_dir}/{model_name}_tfidf_global.json"
+
+    tfidf_cluster_summary(
+        df_proc,
+        save_path=global_path,
+        k=10,
+        ngram_range=(1, 2),
+        min_df=1,
+        max_df=0.8,
+    )
+
+
+    return df_proc
+
 
 # ---- driver code ---
 
-def tuning_pipeline_driver():
+def tuning_pipeline_driver(
+    k_list: List[int],
+    n_components: Optional[int] = None,
+):
     """
     Driver code for tuning embedding clustering models.
     """
     embeddings_df = load_embeddings_dataset("data/videogame_embeddings/embedding_dataset.parquet")
 
     models = ['ast', 'clap', 'wavlm']
-    n_clusters = [10]
-    eps = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 5, 10]
-    k_list = [2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
     for model_name in models:
         logger.info(f"Tuning clustering for {model_name} embeddings…")
         tuning_results = tune_embedding_clusters(
             embeddings_df,
             model_name=model_name,
-            k_list=k_list
+            k_list=k_list,
+            n_components=n_components,
         )
         logger.info(f"Tuning results for {model_name}: {tuning_results}")
 
 
-def plotting_pipeline_driver():
+def plotting_pipeline_driver(
+    k: int,
+    dim: int = 2,
+    n_components: Optional[int] = None,
+):
     """
     Driver code for plotting embedding clustering results.
     """
@@ -321,7 +371,6 @@ def plotting_pipeline_driver():
     model_names = ['ast', 'clap', 'wavlm']
 
     for model_name in model_names:
-        k = 10
         # model = KMeansClusterModel(n_clusters=k)
         model = KMeans(n_clusters=k, random_state=42)
 
@@ -330,17 +379,20 @@ def plotting_pipeline_driver():
             embeddings_df,
             model_name=model_name,
             model=model,
-            dim=2
+            dim=dim,
+            n_components=n_components
         )
         logger.info(f"Clustered DataFrame head:\n{clustered_df.head()}")
 
-def metadata_evaluation_driver():
+def metadata_evaluation_driver(
+    k: int,
+    n_components: Optional[int] = None,
+):
     """
     Driver code for evaluating embedding clustering with TF-IDF metadata summaries.
     """
 
     embeddings_df = load_embeddings_dataset("data/videogame_embeddings/embedding_dataset.parquet")
-    k = 10
 
     # model = KMeansClusterModel(n_clusters=k)
     model = KMeans(n_clusters=k, random_state=42)
@@ -348,17 +400,72 @@ def metadata_evaluation_driver():
     
     for model_name in model_names:
         logger.info(f"Evaluating metadata for {model_name} embeddings with K={k}…")
-        evaluated_df = evaluate_embedding_metadata(
+        evaluated_df = evaluate_metadata(
             embeddings_df,
             model_name=model_name,
-            model=model
+            model=model,
+            n_components=n_components,
+            save_dir="results/embedding_general/json/",
         )
         logger.info(f"Evaluated DataFrame head:\n{evaluated_df.head()}")
 
 
-if __name__ == "__main__":
-
-    # tuning_pipeline_driver()
-    plotting_pipeline_driver()
-    # metadata_evaluation_driver()
+def main():
+    parser = argparse.ArgumentParser(description="CTM clustering pipeline")
     
+    parser.add_argument("--mode", choices=["tune", "plot", "evaluate_columns", "evaluate_tfidf"], required=True,
+                        help="Pipeline mode: tune, plot, evaluate_columns, evaluate_tfidf")
+    
+    # Tuning arguments
+    parser.add_argument("--k-list", nargs="+", type=int, default=[2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25],
+                        help="List of k values for tuning")
+    
+    # Plotting arguments
+    parser.add_argument("--k", type=int, default=6, help="Number of clusters for plotting")
+    parser.add_argument("--dim", type=int, choices=[2, 3], default=3, help="Plot dimension (2 or 3)")
+    
+    # Common arguments
+    parser.add_argument("--n-components", type=int, default=30, help="Number of PCA components")
+    
+    # Evaluation arguments
+    parser.add_argument("--save-dir", type=str, default="results/embedding_general/json",
+                        help="Save directory for evaluation results")
+    parser.add_argument("--model-name", type=str, default="ast", help="Embedding model name (ast, clap, wavlm)")
+    
+    args = parser.parse_args()
+    
+    if args.mode == "tune":
+        tuning_pipeline_driver(
+            k_list=args.k_list,
+            n_components=args.n_components
+        )
+    elif args.mode == "plot":
+        plotting_pipeline_driver(
+            k=args.k,
+            dim=args.dim,
+            n_components=args.n_components
+        )
+    # elif args.mode == "evaluate":
+    #     metadata_evaluation_driver(
+    #         k=args.k,
+    #         n_components=args.n_components,
+    #     )
+    elif args.mode == "evaluate_columns":
+        evaluate_columns(
+            df=load_embeddings_dataset("data/videogame_embeddings/embedding_dataset.parquet"),
+            model_name="ast",
+            model=KMeans(n_clusters=args.k, random_state=42),
+            n_components=args.n_components,
+            save_dir=args.save_dir,
+        )
+    elif args.mode == "evaluate_tfidf":
+        evaluate_tfidf(
+            df=load_embeddings_dataset("data/videogame_embeddings/embedding_dataset.parquet"),
+            model_name=args.model_name,
+            model=KMeans(n_clusters=args.k, random_state=42),
+            n_components=args.n_components,
+            save_dir=args.save_dir,
+        )
+
+if __name__ == "__main__":
+    main()
