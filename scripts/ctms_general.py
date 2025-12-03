@@ -119,6 +119,7 @@ def tune_clusters(
     k_list: Optional[List[int]] = None,
     n_components: Optional[int] = None,
     save_dir: str = "results/ctms_general/json",
+    save: bool = True
 
 ):
     """
@@ -148,13 +149,13 @@ def tune_clusters(
             silhouette_scores["kmeans"][k] = silhouette_score(X, labels)
             davies_bouldin_scores["kmeans"][k] = davies_bouldin_score(X, labels)
 
-
-    score_path = f"{save_dir}/ctm_tuning_scores.json"
-    with open(score_path, "w") as f:
-        json.dump({
-            "silhouette": silhouette_scores,
-            "davies_bouldin": davies_bouldin_scores
-        }, f, indent=2)
+    if save:
+        score_path = f"{save_dir}/ctm_kmeans_tuning_scores.json"
+        with open(score_path, "w") as f:
+            json.dump({
+                "silhouette": silhouette_scores["kmeans"],
+                "davies_bouldin": davies_bouldin_scores["kmeans"]
+            }, f, indent=2)
 
     return silhouette_scores, davies_bouldin_scores
 
@@ -168,7 +169,8 @@ def plot_clusters(
     dim: int = 2,
     remove_outliers: bool = True,
     save_dir: str = "results/ctms_general/figs",
-    model_name: str = "ctm"
+    model_name: str = "ctm",
+    save: bool = True
 ):
     """
     Preprocess -> cluster -> plot PCA (2D/3D).
@@ -201,8 +203,10 @@ def plot_clusters(
         plt.ylabel("PC2")
         plt.tight_layout()
         plt.colorbar(s, label="Cluster Label")
+        plt.show()
         save_path = f"{save_dir}/{model_name}_2D_clusters.png"
-        plt.savefig(save_path, dpi=300)
+        if save:
+            plt.savefig(save_path, dpi=300)
         return df_proc
 
     # ---- 3D ----
@@ -215,8 +219,10 @@ def plot_clusters(
     ax.set_zlabel("PC3")
     plt.tight_layout()
     plt.colorbar(s, label="Cluster Label")
+    plt.show()
     save_path = f"{save_dir}/{model_name}_3D_clusters.png"
-    plt.savefig(save_path, dpi=300)
+    if save:
+        plt.savefig(save_path, dpi=300)
     return df_proc
 
 

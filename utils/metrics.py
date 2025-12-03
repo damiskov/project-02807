@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from loguru import logger
 
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from collections import Counter
 
 import seaborn as sns
@@ -195,8 +195,8 @@ def silhouette_score(X: np.ndarray, labels: np.ndarray) -> float:
 def column_wise_summary(
     df: pd.DataFrame,
     columns: List[str],
-    save_path: str,
-) -> None:
+    save_path: Optional[str] = None,
+) -> Dict[Any, Dict[str, Dict[str, int]]]:
     """
     For each cluster and each column:
     - Count occurrences of each unique element.
@@ -271,10 +271,12 @@ def column_wise_summary(
             # Store counts under a dedicated key to avoid overwriting
             summary[c_key][col]["counts"] = counts
 
-    with open(save_path, "w") as f:
-        json.dump(summary, f, indent=4)
+    if save_path:
+        logger.info(f"Saving column-wise cluster summary to {save_path}")
+        with open(save_path, "w") as f:
+            json.dump(summary, f, indent=4)
 
-    return None
+    return summary
 
 
 def plot_merged_attribute_heatmap(
