@@ -187,6 +187,10 @@ def plot_clusters(
     labels = model.fit_predict(X)
     df_proc["cluster_label"] = labels
     
+    # set colours
+    unique_labels = np.unique(labels)
+    colors = plt.cm.get_cmap("tab10", len(unique_labels))
+    
     # randomly sample points if too many
     if X.shape[0] > 1000:
         sample_indices = np.random.choice(X.shape[0], size=1000, replace=False)
