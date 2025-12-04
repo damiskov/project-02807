@@ -131,6 +131,7 @@ def tune_embedding_clusters(
     k_list: Optional[List[int]] = None,
     n_components: Optional[int] = None,
     save_path: str = "results/embedding_general",
+    save: bool = True,
 ):
     """
     Unified silhouette-based tuning for KMeans, DBSCAN, Hierarchical.
@@ -148,6 +149,7 @@ def tune_embedding_clusters(
         silhouette_scores: Dict of silhouette scores per model and param.
         davies_bouldin_scores: Dict of Davies-Bouldin scores per model and param
     """
+    logger.info(f"Tuning clustering for {model_name} embeddings with n_components={n_components}…")
     logger.info(f"Preprocessing embeddings for tuning ({model_name})…")
     df_proc, X = preprocess_embeddings(df, model_name, n_components=n_components)
 
@@ -169,13 +171,14 @@ def tune_embedding_clusters(
 
 
     # Ensure save directory exists
-    os.makedirs(f"{save_path}/json", exist_ok=True)
-    score_path = f"{save_path}/json/{model_name}_tuning_scores.json"
-    with open(score_path, "w") as f:
-        json.dump({
-            "silhouette": silhouette_scores,
-            "davies_bouldin": davies_bouldin_scores
-        }, f, indent=2)
+    if save:
+        os.makedirs(f"{save_path}/json", exist_ok=True)
+        score_path = f"{save_path}/json/{model_name}_tuning_scores.json"
+        with open(score_path, "w") as f:
+            json.dump({
+                "silhouette": silhouette_scores,
+                "davies_bouldin": davies_bouldin_scores
+            }, f, indent=2)
 
     return silhouette_scores, davies_bouldin_scores
 
@@ -190,6 +193,7 @@ def plot_embedding_clusters(
     n_components: Optional[int] = None,
     dim: int = 2,
     remove_outliers: bool = True,
+    save: bool = True,
 ):
     """
     Preprocess -> cluster -> plot (2D or 3D PCA).
@@ -227,8 +231,10 @@ def plot_embedding_clusters(
     ax.set_zlabel("PC3")
     plt.tight_layout()
     plt.colorbar(s, ax=ax, label="Cluster Label")
+    plt.show()
     save_path = f"{save_dir}/{model_name}_3D_clusters.png"
-    plt.savefig(save_path, dpi=300)
+    if save:
+        plt.savefig(save_path, dpi=300)
     
     return df_proc
 
