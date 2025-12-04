@@ -1,29 +1,82 @@
 # project-02807
-Project for 02807 - Computational tools for data science, Group 44
 
+## Computational Tools for Data Science — Final Project (Group 44)
 
-### Setting up the Python Environment for this project
-----
-0. Ensure python is installed ([link](https://www.python.org/downloads/))
-    > Note that the python version used is **3.12**. Please ensure you are using this version when running any code from this repo.
+This repository contains the full codebase for our final project in **02807 — Computational Tools for Data Science**, DTU (Fall 2025).
 
-1. Install uv ([link](https://docs.astral.sh/uv/getting-started/installation/)).
+The project integrates multiple topics from the course curriculum, including:
 
-2. Navigate to your local directory that contains this project.
+- General clustering algorithms
+- Graph-based clustering/evaluation methods
+- Frequent-items / TF–IDF analysis for metadata interpretation
+- Similarity search using high-dimensional embedding representations
 
-3. Run the following commands in your terminal:
+Additionally, the project implements techniques **beyond the curriculum**, satisfying the requirement for self-directed exploration, including:
 
-    3.1 To create the virtual environment: `uv venv`
-    
-    3.2 To activate the virtual environment:
-    - **Windows:** `.venv/Scripts/activate`
-    - **Mac/Linux:** `source .venv/bin/activate`
-    
-    3.3 To install the dependencies: `uv sync` 
+- Neural audio embeddings (CLAP, AST, WavLM)
+- MIDI feature extraction and Chord Trajectory Matrices (CTMs)
+- Dimensionality reduction and outlier-aware clustering pipelines
+- Custom visualisation and evaluation tooling
 
-    > This will both create a virtual environment and install all the necessary dependencies to run the solutions to the exam problems.
+## Environment Setup
 
-4. Solutions to the exam problems are found in the `tasks/` folder. Each are named `qX.py` where `X` refers to the question number. In order to run each of the tasks please enter and run the following command in your terminal:
-    ```bash
-    uv run python -m tasks.qX
-    ```
+This project uses **Python 3.12** and the **uv** package manager.
+
+1. Install Python 3.12  
+   Download from: https://www.python.org/downloads/
+
+2. Install uv  
+   Instructions: https://docs.astral.sh/uv/getting-started/installation/
+
+3. Create & activate the virtual environment
+
+From the project root:
+
+```bash
+uv venv
+```
+
+4. Activate it:
+
+- Windows
+
+```bash
+venv/Scripts/activate
+```
+
+- Mac/Linux
+
+```bash
+source .venv/bin/activate
+```
+
+4. Install dependencies
+
+```
+uv sync
+```
+
+Download from: https://www.python.org/downloads/
+
+---
+
+## Project Summary
+
+The project investigates how **symbolic music representations** (e.g., CTMs) compare to **neural audio embeddings** (CLAP, AST, WavLM) for **unsupervised clustering of video-game soundtracks**.
+
+We:
+
+- Extracted structured symbolic features from MIDI files
+- Generated neural embeddings from WAV audio
+- Applied K-Means, DBSCAN, and hierarchical clustering
+- Used PCA for dimensionality reduction
+- Performed internal validation (silhouette coefficient, DB index, dispersion)
+- Used TF–IDF to interpret clusters via metadata (themes, companies, keywords)
+
+All pipeline components are implemented under either `utils/` or `scripts` and reproduced via notebooks in `notebooks/` or `scripts`.
+
+## Reproducibility Notes
+
+- All preprocessing steps are deterministic.
+- PCA and clustering use fixed random seeds where supported.
+- Figures and validations can be regenerated using the notebooks.
