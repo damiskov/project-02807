@@ -224,9 +224,9 @@ def plot_clusters(
     ax.set_zlabel("PC3")
     plt.tight_layout()
     # set 4,4,4 as limits
-    ax.set_xlim([-1, 4])
-    ax.set_ylim([-1, 4])
-    ax.set_zlim([-1, 4])
+    # ax.set_xlim([-1, 4])
+    # ax.set_ylim([-1, 4])
+    # ax.set_zlim([-1, 4])
     # plt.colorbar(s, label="Cluster Label")
     save_path = f"{save_dir}/{model_name}_3D_clusters.png"
     if save:

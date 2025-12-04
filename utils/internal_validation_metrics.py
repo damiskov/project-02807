@@ -121,3 +121,39 @@ def manual_silhouette_score(X, labels):
         silhouettes[idx] = (b_i - a_i) / max(a_i, b_i) if max(a_i, b_i) > 0 else 0.0
     
     return np.mean(silhouettes)
+
+
+def manual_average_dispersion(X: np.ndarray, labels: np.ndarray) -> float:
+    """
+    Calculates the Average Intra-Cluster Dispersion (Compactness).
+    
+    Args:
+        X: (N, D) array of data points (e.g., normalized eigenvectors).
+        labels: (N,) array of cluster assignments.
+        
+    Returns:
+        float: The average dispersion across all clusters.
+    """
+    # Identify unique clusters present in the labels
+    unique_labels = np.unique(labels)
+    k = len(unique_labels)
+    
+    if k == 0:
+        return 0.0
+
+    total_dispersion = 0.0
+
+    for cluster_id in unique_labels:
+        # 1. Mask data for the current cluster
+        cluster_points = X[labels == cluster_id]
+        
+        # 2. Calculate Dispersion only if points exist
+        if len(cluster_points) > 0:
+            centroid = cluster_points.mean(axis=0)
+            
+            # Mean Euclidean distance of all points in this cluster to their centroid
+            intra_dist = np.mean(np.linalg.norm(cluster_points - centroid, axis=1))
+            total_dispersion += intra_dist
+
+    # 3. Return the Macro-Average (Average of averages)
+    return total_dispersion / k

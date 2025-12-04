@@ -5,9 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fa2-modified>=0.4",
+    "graphviz>=0.21",
+    "igraph>=1.0.0",
     "ipykernel>=7.1.0",
     "loguru>=0.7.3",
     "midi2audio>=0.1.1",
+    "nbformat>=5.10.4",
+    "nbmerge>=0.0.4",
     "networkx>=3.5",
     "numpy>=2.3.4",
     "pandas>=2.3.3",
