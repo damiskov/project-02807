@@ -41,10 +41,11 @@ def load_embeddings_dataset(path: str) -> pd.DataFrame:
     return df
         
 
-def load_ctms_dataset(path: str) -> pd.DataFrame:
+def load_ctms_dataset(path: str, stack_ctms: bool = True) -> pd.DataFrame:
     """Load CTM-based dataset"""
     df = pd.read_parquet(path)
-    df["ctm"] = df["ctm"].apply(lambda x: np.stack(x, axis=0).astype(np.int32)) # need to convert list of arrays to single array
+    if stack_ctms:
+        df["ctm"] = df["ctm"].apply(lambda x: np.stack(x, axis=0).astype(np.int32)) # need to convert list of arrays to single array
     df = clean_metadata_column(df)
     return df
 

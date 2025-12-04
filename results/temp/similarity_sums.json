@@ -1,0 +1,10 @@
+{
+    "ast_base_tfidf.json": 0.02564102564102564,
+    "ast_graph_tfidf.json": 0.362035665879422,
+    "clap_base_tfidf.json": 0.5853951117109012,
+    "clap_graph_tfidf.json": 1.4399898999125915,
+    "ctms_base_tfidf.json": 0.9689879039103556,
+    "ctms_graph_tfidf.json": 2.5477785616353548,
+    "wavlm_base_tfidf.json": 0.3073747717710566,
+    "wavlm_graph_tfidf.json": 0.18805484070461026
+}

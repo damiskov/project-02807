@@ -216,7 +216,7 @@ def plot_embedding_clusters(
         plt.xlabel("PC1")
         plt.ylabel("PC2")
         plt.tight_layout()
-        plt.colorbar(s, label="Cluster Label")
+        # plt.colorbar(s, label="Cluster Label")
         save_path = f"{save_dir}/{model_name}_2D_clusters.png"
         plt.savefig(save_path, dpi=300)
         return df_proc
@@ -230,7 +230,7 @@ def plot_embedding_clusters(
     ax.set_ylabel("PC2")
     ax.set_zlabel("PC3")
     plt.tight_layout()
-    plt.colorbar(s, ax=ax, label="Cluster Label")
+    # plt.colorbar(s, ax=ax, label="Cluster Label")
     plt.show()
     save_path = f"{save_dir}/{model_name}_3D_clusters.png"
     if save:
@@ -258,12 +258,12 @@ def evaluate_metadata(
     df_proc["cluster_label"] = model.fit_predict(X)
 
     os.makedirs(save_dir, exist_ok=True)
-    global_path = f"{save_dir}/{model_name}_tfidf_global.json"
+    global_path = f"{save_dir}/{model_name}_base_tfidf.json"
 
     tfidf_cluster_summary(
         df_proc,
         save_path=global_path,
-        k=10,
+        k=50,
         ngram_range=(1, 2),
         min_df=1,
         max_df=0.8,
@@ -326,12 +326,12 @@ def evaluate_tfidf(
     logger.debug(f"Clustered DataFrame head:\n{df_proc[['metadata', 'cluster_label']].head()}")
     
     os.makedirs(save_dir, exist_ok=True)
-    global_path = f"{save_dir}/{model_name}_tfidf_global.json"
+    global_path = f"{save_dir}/{model_name}_base_tfidf.json"
 
     tfidf_cluster_summary(
         df_proc,
         save_path=global_path,
-        k=10,
+        k=50,
         ngram_range=(1, 2),
         min_df=1,
         max_df=0.8,
@@ -436,7 +436,7 @@ def main():
     # Evaluation arguments
     parser.add_argument("--save-dir", type=str, default="results/embedding_general/json",
                         help="Save directory for evaluation results")
-    parser.add_argument("--model-name", type=str, default="ast", help="Embedding model name (ast, clap, wavlm)")
+    parser.add_argument("--model-name", type=str, default="ast", choices=["ast", "clap", "wavlm"], help="Embedding model name (ast, clap, wavlm)")
     
     args = parser.parse_args()
     

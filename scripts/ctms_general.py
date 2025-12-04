@@ -200,17 +200,18 @@ def plot_clusters(
 
     # ---- 2D ----
     if dim == 2:
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(10, 7))
         s = plt.scatter(X[:, 0], X[:, 1], c=labels, cmap="tab10", alpha=0.7)
         plt.title(f"2D PCA clusters (CTM)")
         plt.xlabel("PC1")
         plt.ylabel("PC2")
         plt.tight_layout()
-        plt.colorbar(s, label="Cluster Label")
-        plt.show()
+        # plt.colorbar(s, label="Cluster Label")
+        # plt.show()
         save_path = f"{save_dir}/{model_name}_2D_clusters.png"
         if save:
             plt.savefig(save_path, dpi=300)
+        plt.show()
         return df_proc
 
     # ---- 3D ----
@@ -222,11 +223,16 @@ def plot_clusters(
     ax.set_ylabel("PC2")
     ax.set_zlabel("PC3")
     plt.tight_layout()
-    plt.colorbar(s, label="Cluster Label")
-    plt.show()
+    # set 4,4,4 as limits
+    ax.set_xlim([-1, 4])
+    ax.set_ylim([-1, 4])
+    ax.set_zlim([-1, 4])
+    # plt.colorbar(s, label="Cluster Label")
     save_path = f"{save_dir}/{model_name}_3D_clusters.png"
     if save:
         plt.savefig(save_path, dpi=300)
+    else:
+        plt.show()
     return df_proc
 
 
@@ -247,7 +253,7 @@ def evaluate_metadata(
     df_proc, X = preprocess_ctms(df, n_components=n_components, remove_outliers=True)
     df_proc["cluster_label"] = model.fit_predict(X)
 
-    path_global = f"{save_dir}/ctms_tfidf_global.json"
+    path_global = f"{save_dir}/ctms_base_tfidf.json"
     path_cols = f"{save_dir}/ctms_column_summary.json"
     
     # check the metadata columns exist
@@ -264,7 +270,7 @@ def evaluate_metadata(
     tfidf_cluster_summary(
         df_proc,
         save_path=path_global,
-        k=10,
+        k=50,
         ngram_range=(1, 2),
         min_df=1,
         max_df=0.8,
