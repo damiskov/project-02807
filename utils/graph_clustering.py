@@ -82,14 +82,7 @@ def spectral_clustering (sim_matrix, k):
 def reduce_dim(X):
     pca = PCA().fit(X)
 
-    # cumulative explained variance
-    cumvar = np.cumsum(pca.explained_variance_ratio_)
-
-    # nr of components for at least 90% explained variance
-    # k = np.searchsorted(cumvar, 0.90) + 1
     k = 30
-
-    # print("Components needed for 90% variance:", k)
 
     pca = PCA(n_components=k)
     X_pca = pca.fit_transform(X)
