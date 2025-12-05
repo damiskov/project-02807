@@ -20,7 +20,10 @@ Additionally, the project implements techniques **beyond the curriculum**, satis
 - Dimensionality reduction and outlier-aware clustering pipelines
 - Custom visualisation and evaluation tooling
 
-NOTE: Custom implementations of various clustering algorithms (Hierarchical, DBSCAN, KMeans) can be found in `models/`. These are not used when running the `main_notebook.ipynb` due to memory and run-time issues.
+NOTE(s):
+
+- Custom implementations of various clustering algorithms (Hierarchical, DBSCAN, KMeans) can be found in `models/`. These are not used when running the `main_notebook.ipynb` due to memory and run-time issues.
+- The two relevant datasets can be found as parquet files in `data\videogame_embeddings\embedding_dataset.parquet` and `data\videogame_sequences\sequence_dataset.parquet`.
 
 > If you have any questions about setting up the environment or issues regarding running the notebook, please feel free to contact s204755@student.dtu.dk
 
