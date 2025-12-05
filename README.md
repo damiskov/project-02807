@@ -11,7 +11,6 @@ The project integrates multiple topics from the course curriculum, including:
 - General clustering algorithms
 - Graph-based clustering/evaluation methods
 - TF–IDF analysis for metadata interpretation
-- Similarity search using high-dimensional embedding representations
 
 Additionally, the project implements techniques **beyond the curriculum**, satisfying the requirement for self-directed exploration, including:
 
@@ -20,7 +19,7 @@ Additionally, the project implements techniques **beyond the curriculum**, satis
 - Dimensionality reduction and outlier-aware clustering pipelines
 - Custom visualisation and evaluation tooling
 
-NOTE(s):
+**NOTE(s)**:
 
 - Custom implementations of various clustering algorithms (Hierarchical, DBSCAN, KMeans) can be found in `models/`. These are not used when running the `main_notebook.ipynb` due to memory and run-time issues.
 - The two relevant datasets can be found as parquet files in `data\videogame_embeddings\embedding_dataset.parquet` and `data\videogame_sequences\sequence_dataset.parquet`.
