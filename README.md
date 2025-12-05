@@ -10,7 +10,7 @@ The project integrates multiple topics from the course curriculum, including:
 
 - General clustering algorithms
 - Graph-based clustering/evaluation methods
-- Frequent-items / TF–IDF analysis for metadata interpretation
+- TF–IDF analysis for metadata interpretation
 - Similarity search using high-dimensional embedding representations
 
 Additionally, the project implements techniques **beyond the curriculum**, satisfying the requirement for self-directed exploration, including:
