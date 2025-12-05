@@ -56,8 +56,6 @@ source .venv/bin/activate
 uv sync
 ```
 
-Download from: https://www.python.org/downloads/
-
 ---
 
 ## Project Summary
