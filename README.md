@@ -2,6 +2,8 @@
 
 ## Computational Tools for Data Science — Final Project (Group 44)
 
+### Comparing symbolic vs. neural embedding representations for clustering video-game soundtracks
+
 This repository contains the full codebase for our final project in **02807 — Computational Tools for Data Science**, DTU (Fall 2025).
 
 The project integrates multiple topics from the course curriculum, including:
